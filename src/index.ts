@@ -45,6 +45,8 @@ interface DrawConfig {
     parent: d3.Selection<SVGGElement, unknown, HTMLElement, any>,
     width: number,
     height: number,
+    x?: number,
+    y?: number,
 }
 
 function parseRecord(row: d3.DSVRowString<string>): PlanetInfo {
@@ -67,6 +69,8 @@ function parseRecord(row: d3.DSVRowString<string>): PlanetInfo {
         disc_facility: row.disc_facility!,
     }
 }
+
+
 
 d3.csv("data/exoplanets-1.csv")
     .then(rawData => {
@@ -95,35 +99,55 @@ function drawChart(data: PlanetInfo[]) {
         .append("g")
             .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-    const drawConfig: DrawConfig = { parent: svg, width, height };
+    const drawConfig: DrawConfig = { parent: svg, width: width / 2, height: height / 2 };
     drawStarCountChart(data, drawConfig);
+    drawPlanetCountChart(data, { ...drawConfig, x: width / 2 + margin.left });
 }
 
 
 
 function drawStarCountChart(data: PlanetInfo[], drawConfig: DrawConfig) {
-    const starCountGroups = d3.rollup(data, (a) => a.length, (d) => `${d.sy_snum} Stars`);
-    const xDomain = d3.sort(starCountGroups.keys())
+    const starCountMap = d3.rollup(data, (a) => a.length, (d) => `${d.sy_snum} Stars`);
+    const starCountData = [ ...starCountMap.entries() ];
+    starCountData.sort((a, b) => a[0].localeCompare(b[0]));
+
+    return drawBarChart(starCountData, drawConfig);
+}
+function drawPlanetCountChart(data: PlanetInfo[], drawConfig: DrawConfig) {
+    const planetCountMap = d3.rollup(data, (a) => a.length, (d) => `${d.sy_pnum}`);
+    const planetCountData = [ ...planetCountMap.entries() ];
+    planetCountData.sort((a, b) => a[0].localeCompare(b[0]));
+
+    return drawBarChart(planetCountData, drawConfig);
+}
+
+function drawBarChart(data: [string, number][], drawConfig: DrawConfig) {
+    const xDomain = data.map(([x, _]) => x);
+    const yDomain = [0, d3.max(data, ([_, y]) => y)!] as const;
 
     const xScale = d3.scaleBand()
         .domain(xDomain)
         .range([0, drawConfig.width])
         .padding(0.4);
     const yScale = d3.scaleLinear()
-        .domain([0, d3.max(starCountGroups.values())!])
+        .domain(yDomain)
         .range([drawConfig.height, 0]);
 
     const xAxis = d3.axisBottom(xScale);
     const yAxis = d3.axisLeft(yScale);
 
-    drawConfig.parent.append("g")
+    const context = drawConfig.parent.append("g")
+        .attr("class", "bar-chart")
+        .attr("transform", `translate(${drawConfig.x || 0}, ${drawConfig.y || 0})`);
+
+    context.append("g")
         .call(xAxis)
         .attr("transform", `translate(0, ${drawConfig.height})`);
-    drawConfig.parent.append("g")
+    context.append("g")
         .call(yAxis);
 
-    drawConfig.parent.selectAll(".bar")
-        .data(starCountGroups)
+    context.selectAll(".bar")
+        .data(data)
         .enter().append("rect")
             .attr("class", "bar")
             .attr("x", (d) => xScale(d[0])!)

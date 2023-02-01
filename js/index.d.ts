@@ -40,8 +40,12 @@ interface DrawConfig {
     parent: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
     width: number;
     height: number;
+    x?: number;
+    y?: number;
 }
 declare function parseRecord(row: d3.DSVRowString<string>): PlanetInfo;
 declare function drawChart(data: PlanetInfo[]): void;
 declare function drawStarCountChart(data: PlanetInfo[], drawConfig: DrawConfig): void;
+declare function drawPlanetCountChart(data: PlanetInfo[], drawConfig: DrawConfig): void;
+declare function drawBarChart(data: [string, number][], drawConfig: DrawConfig): void;
 //# sourceMappingURL=index.d.ts.map
