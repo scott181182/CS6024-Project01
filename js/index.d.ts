@@ -52,18 +52,8 @@ interface ChartConfig {
     xAxisLabel: string;
     yAxisLabel: string;
 }
-interface BarConfig extends ChartConfig {
-    xOrder?: string[];
-    xSort?: (a: string, b: string) => number;
-}
-interface ScatterConfig extends ChartConfig {
-}
 declare function parseRecord(row: d3.DSVRowString<string>): PlanetInfo;
-declare function drawChart(data: PlanetInfo[]): void;
-declare const SPEC_SEQUENCE: string[];
-declare function spectypeFromPlanet(info: PlanetInfo): string;
-declare function drawAggregateBarChart(data: PlanetInfo[], keyFn: (info: PlanetInfo) => string, barConfig: BarConfig, drawConfig: DrawConfig): void;
-declare function drawBarChart(data: [string, number][], barConfig: BarConfig, drawConfig: DrawConfig): void;
-declare function drawScatterChart(data: [number, number][], scatterConfig: ScatterConfig, drawConfig: DrawConfig): void;
-declare function wrapAxisText(text: d3.Selection<d3.BaseType, unknown, SVGGElement, any>, width: number): void;
+declare const SELECTION_DATA: TableHeaderInfo<PlanetInfo>[];
+declare function visualizeData(data: PlanetInfo[]): void;
+declare function drawAggregateBarChart(data: PlanetInfo[], keyFn: (info: PlanetInfo) => string, barConfig: BarConfig, drawConfig: DrawConfig): BarChart;
 //# sourceMappingURL=index.d.ts.map

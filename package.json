@@ -2,9 +2,9 @@
     "scripts": {
         "build": "tsc -p . --pretty",
         "watch": "tsc -p . --pretty --watch",
-        "serve": "npx http-server",
+        "serve": "npx http-server -c-1 .",
         "dev": "run-p watch serve",
-        "start": "npm run build && npx http-server ."
+        "start": "npm run build && npx http-server -c-1 ."
     },
     "devDependencies": {
         "@types/d3": "^7.4.0",
