@@ -24,6 +24,7 @@ interface PlanetInfo {
     sy_dist?: number,
 
     /** Orbital Period, in days. */
+
     /** Orbital Semi-Major Axis, in AU. */
     pl_orbsmax?: number,
     /** Planet Radius, in Earth Radius. */
@@ -41,13 +42,31 @@ interface PlanetInfo {
     st_mass?: number,
 }
 
-interface DrawConfig {
-    parent: d3.Selection<SVGGElement, unknown, HTMLElement, any>,
-    width: number,
-    height: number,
-    x?: number,
-    y?: number,
+interface Margin {
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
 }
+interface DrawConfig {
+    // parent: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+    parent: string;
+    width: number;
+    height: number;
+    margin?: Margin;
+}
+
+interface ChartConfig {
+    xAxisLabel: string;
+    yAxisLabel: string;
+}
+interface BarConfig extends ChartConfig {
+    xOrder?: string[];
+    xSort?: (a: string, b: string) => number;
+}
+interface ScatterConfig extends ChartConfig {  }
+
+
 
 function parseRecord(row: d3.DSVRowString<string>): PlanetInfo {
     return {
@@ -76,7 +95,7 @@ d3.csv("data/exoplanets-1.csv")
     .then(rawData => {
         console.log("Data loading complete");
         const data = rawData.map(parseRecord);
-
+        console.log(data);
         drawChart(data);
     })
     .catch(err => {
@@ -86,42 +105,64 @@ d3.csv("data/exoplanets-1.csv")
 
 function drawChart(data: PlanetInfo[]) {
     // Margin object with properties for the four directions
-    const margin = { top: 50, right: 50, bottom: 50, left: 50 };
-    // Width and height as the inner dimensions of the chart area
-    const width = 1000 - margin.left - margin.right;
-    const height = 600 - margin.top - margin.bottom;
+    const margin = { top: 50, right: 50, bottom: 50, left: 100 };
 
-    // Define 'svg' as a child-element (g) from the drawing area and include spaces
-    // Add <svg> element (drawing space)
-    const svg = d3.select("body").append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-        .append("g")
-            .attr("transform", `translate(${margin.left}, ${margin.top})`);
+    const drawConfig: DrawConfig = {
+        parent: "#chart-area",
+        width: 450,
+        height: 300,
+        margin
+    };
+    const yLabel = "# of Exoplanets"
+    drawAggregateBarChart(data, (d) => `${d.sy_snum}`, { xAxisLabel: "Stars In System", yAxisLabel: yLabel }, drawConfig);
+    drawAggregateBarChart(data, (d) => `${d.sy_pnum}`, { xAxisLabel: "Planets in System", yAxisLabel: yLabel }, drawConfig);
+    drawAggregateBarChart(data, spectypeFromPlanet, { xAxisLabel: "Star Sequence", yAxisLabel: yLabel, xOrder: SPEC_SEQUENCE }, drawConfig);
 
-    const drawConfig: DrawConfig = { parent: svg, width: width / 2, height: height / 2 };
-    drawStarCountChart(data, drawConfig);
-    drawPlanetCountChart(data, { ...drawConfig, x: width / 2 + margin.left });
+    const radiusMassMap = data
+        .map((d) => [ d.pl_rade, d.pl_bmasse ] as const)
+        .filter(([ r, m ]) => r !== undefined && m !== undefined) as [number, number][];
+    drawScatterChart(radiusMassMap, { xAxisLabel: "Planet Radius (earths)", yAxisLabel: "Planet Mass (earths)" }, drawConfig);
+}
+
+const SPEC_SEQUENCE = ["O", "B", "A", "F", "G", "K", "M", "White Dwarf", "Cool Dwarf", "Subdwarf"];
+function spectypeFromPlanet(info: PlanetInfo) {
+    if (!info.st_spectype) { return ""; }
+
+    const MAIN_SEQ = ["O", "B", "A", "F", "G", "K", "M"];
+    const spectype = info.st_spectype.toUpperCase();
+    if (MAIN_SEQ.includes(spectype.charAt(0))) { return spectype.charAt(0); }
+    if (spectype.startsWith("D") || spectype.startsWith("WD")) { return "White Dwarf"; }
+    if (spectype.startsWith("L") || spectype.startsWith("T") || spectype.startsWith("Y")) { return "Cool Dwarf"; }
+    if (spectype.startsWith("SD")) { return "Subdwarf"; }
+
+    return info.st_spectype;
 }
 
 
 
-function drawStarCountChart(data: PlanetInfo[], drawConfig: DrawConfig) {
-    const starCountMap = d3.rollup(data, (a) => a.length, (d) => `${d.sy_snum} Stars`);
-    const starCountData = [ ...starCountMap.entries() ];
-    starCountData.sort((a, b) => a[0].localeCompare(b[0]));
+function drawAggregateBarChart(data: PlanetInfo[], keyFn: (info: PlanetInfo) => string, barConfig: BarConfig, drawConfig: DrawConfig) {
+    const countMap = d3.rollup(data, (a) => a.length, keyFn);
+    const countData = [...countMap.entries()].filter(([k, _]) => !!k);
+    const sortFn = barConfig.xSort ||
+        (barConfig.xOrder ? ((a: string, b: string) => barConfig.xOrder!.indexOf(a) - barConfig.xOrder!.indexOf(b)) :
+            (a: string, b: string) => a.localeCompare(b));
+    countData.sort((a, b) => sortFn(a[0], b[0]));
 
-    return drawBarChart(starCountData, drawConfig);
-}
-function drawPlanetCountChart(data: PlanetInfo[], drawConfig: DrawConfig) {
-    const planetCountMap = d3.rollup(data, (a) => a.length, (d) => `${d.sy_pnum}`);
-    const planetCountData = [ ...planetCountMap.entries() ];
-    planetCountData.sort((a, b) => a[0].localeCompare(b[0]));
-
-    return drawBarChart(planetCountData, drawConfig);
+    return drawBarChart(countData, barConfig, drawConfig);
 }
 
-function drawBarChart(data: [string, number][], drawConfig: DrawConfig) {
+function drawBarChart(data: [string, number][], barConfig: BarConfig, drawConfig: DrawConfig) {
+    const margin = drawConfig.margin || { top: 0, bottom: 0, left: 0, right: 0 };
+    const totalWidth = drawConfig.width + margin.left + margin.right;
+    const totalHeight = drawConfig.height + margin.top + margin.bottom;
+    const svg = d3.select(drawConfig.parent).append("svg")
+        .attr("width", totalWidth)
+        .attr("height", totalHeight)
+        .attr("viewBox", `0 0 ${totalWidth} ${totalHeight}`);
+    const ctx = svg.append("g")
+        .attr("class", "bar-chart")
+        .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
     const xDomain = data.map(([x, _]) => x);
     const yDomain = [0, d3.max(data, ([_, y]) => y)!] as const;
 
@@ -136,22 +177,113 @@ function drawBarChart(data: [string, number][], drawConfig: DrawConfig) {
     const xAxis = d3.axisBottom(xScale);
     const yAxis = d3.axisLeft(yScale);
 
-    const context = drawConfig.parent.append("g")
-        .attr("class", "bar-chart")
-        .attr("transform", `translate(${drawConfig.x || 0}, ${drawConfig.y || 0})`);
+    ctx.append("g")
+        .call(xAxis)
+            .attr("transform", `translate(0, ${drawConfig.height})`)
+        .selectAll(".tick text")
+            .call(wrapAxisText, xScale.bandwidth());
+    svg.append("text")
+        .attr("class", "x-label")
+        .attr("text-anchor", "middle")
+        .attr("x", margin.left + drawConfig.width / 2)
+        .attr("y", margin.top + drawConfig.height + margin.bottom - 6)
+        .text(barConfig.xAxisLabel);
+    ctx.append("g")
+        .call(yAxis);
+    svg.append("text")
+        .attr("class", "y-label")
+        .attr("text-anchor", "middle")
+        .attr("x", 0 - margin.top - drawConfig.height / 2)
+        .attr("y", 50)
+        .attr("transform", "rotate(-90)")
+        .text(barConfig.yAxisLabel);
 
-    context.append("g")
+    ctx.selectAll(".bar")
+        .data(data)
+        .join("rect")
+        .attr("class", "bar")
+        .attr("x", (d) => xScale(d[0])!)
+        .attr("y", (d) => yScale(d[1]))
+        .attr("width", xScale.bandwidth())
+        .attr("height", (d) => drawConfig.height - yScale(d[1]));
+}
+
+function drawScatterChart(data: [number, number][], scatterConfig: ScatterConfig, drawConfig: DrawConfig) {
+    const margin = drawConfig.margin || { top: 0, bottom: 0, left: 0, right: 0 };
+    const totalWidth = drawConfig.width + margin.left + margin.right;
+    const totalHeight = drawConfig.height + margin.top + margin.bottom;
+    const svg = d3.select(drawConfig.parent).append("svg")
+        .attr("width", totalWidth)
+        .attr("height", totalHeight)
+        .attr("viewBox", `0 0 ${totalWidth} ${totalHeight}`);
+    const ctx = svg.append("g")
+        .attr("class", "scatter-chart")
+        .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+    const xDomain = d3.extent(data, ([ x, _ ]) => x) as  [number, number];
+    const yDomain = d3.extent(data, ([ _, y ]) => y) as  [number, number];
+
+    const xScale = d3.scaleLinear()
+        .domain(xDomain)
+        .range([0, drawConfig.width]);
+    const yScale = d3.scaleLinear()
+        .domain(yDomain)
+        .range([drawConfig.height, 0]);
+
+    const xAxis = d3.axisBottom(xScale);
+    const yAxis = d3.axisLeft(yScale);
+
+    ctx.append("g")
         .call(xAxis)
         .attr("transform", `translate(0, ${drawConfig.height})`);
-    context.append("g")
+    svg.append("text")
+        .attr("class", "x-label")
+        .attr("text-anchor", "middle")
+        .attr("x", margin.left + drawConfig.width / 2)
+        .attr("y", margin.top + drawConfig.height + margin.bottom - 6)
+        .text(scatterConfig.xAxisLabel);
+    ctx.append("g")
         .call(yAxis);
+    svg.append("text")
+        .attr("class", "y-label")
+        .attr("text-anchor", "middle")
+        .attr("x", 0 - margin.top - drawConfig.height / 2)
+        .attr("y", 50)
+        .attr("transform", "rotate(-90)")
+        .text(scatterConfig.yAxisLabel);
 
-    context.selectAll(".bar")
+    ctx.selectAll(".scatter-point")
         .data(data)
-        .enter().append("rect")
-            .attr("class", "bar")
-            .attr("x", (d) => xScale(d[0])!)
-            .attr("y", (d) => yScale(d[1]))
-            .attr("width", xScale.bandwidth())
-            .attr("height", (d) => drawConfig.height - yScale(d[1]));
+        .join("circle")
+            .attr("class", "scatter-point")
+            .attr("cx", (d) => xScale(d[0])!)
+            .attr("cy", (d) => yScale(d[1]))
+            .attr("r", 2);
+}
+
+
+
+function wrapAxisText(text: d3.Selection<d3.BaseType, unknown, SVGGElement, any>, width: number) {
+    text.each(function () {
+        const text = d3.select(this);
+        const words = text.text().split(/\s+/).reverse();
+        let word: string | undefined;
+        let line: string[] = [];
+        let lineNumber = 0;
+        const lineHeight = 1.1;
+        const y = text.attr("y");
+        const dy = parseFloat(text.attr("dy"));
+        let tspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+
+        while (word = words.pop()) {
+            line.push(word)
+            tspan.text(line.join(" "))
+            if ((tspan.node()?.getComputedTextLength() || 0) > width && line.length > 1) {
+                line.pop()
+                tspan.text(line.join(" "))
+                line = [word]
+                tspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", `${++lineNumber * lineHeight + dy}em`).text(word)
+            }
+        }
+    })
 }

@@ -36,16 +36,34 @@ interface PlanetInfo {
     /** Stellar Mass, in solar mass. */
     st_mass?: number;
 }
+interface Margin {
+    top: number;
+    bottom: number;
+    left: number;
+    right: number;
+}
 interface DrawConfig {
-    parent: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+    parent: string;
     width: number;
     height: number;
-    x?: number;
-    y?: number;
+    margin?: Margin;
+}
+interface ChartConfig {
+    xAxisLabel: string;
+    yAxisLabel: string;
+}
+interface BarConfig extends ChartConfig {
+    xOrder?: string[];
+    xSort?: (a: string, b: string) => number;
+}
+interface ScatterConfig extends ChartConfig {
 }
 declare function parseRecord(row: d3.DSVRowString<string>): PlanetInfo;
 declare function drawChart(data: PlanetInfo[]): void;
-declare function drawStarCountChart(data: PlanetInfo[], drawConfig: DrawConfig): void;
-declare function drawPlanetCountChart(data: PlanetInfo[], drawConfig: DrawConfig): void;
-declare function drawBarChart(data: [string, number][], drawConfig: DrawConfig): void;
+declare const SPEC_SEQUENCE: string[];
+declare function spectypeFromPlanet(info: PlanetInfo): string;
+declare function drawAggregateBarChart(data: PlanetInfo[], keyFn: (info: PlanetInfo) => string, barConfig: BarConfig, drawConfig: DrawConfig): void;
+declare function drawBarChart(data: [string, number][], barConfig: BarConfig, drawConfig: DrawConfig): void;
+declare function drawScatterChart(data: [number, number][], scatterConfig: ScatterConfig, drawConfig: DrawConfig): void;
+declare function wrapAxisText(text: d3.Selection<d3.BaseType, unknown, SVGGElement, any>, width: number): void;
 //# sourceMappingURL=index.d.ts.map
