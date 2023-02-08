@@ -1,7 +1,7 @@
 
 
 
-interface BarConfig extends ChartConfig {
+interface BarConfig extends ChartConfig<string, number> {
     xOrder?: string[];
     xSort?: (a: string, b: string) => number;
 }

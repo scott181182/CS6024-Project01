@@ -1,67 +1,3 @@
-interface PlanetInfo {
-    /** Planet Name. */
-    pl_name?: string,
-    /** Host Name. */
-    hostname: string,
-
-    /** Discovery Method. */
-    discoverymethod: string,
-    /** Discovery Year. */
-    disc_year: number,
-    /** Which facility discovered the exoplanet. */
-    disc_facility: string,
-
-    /**
-     * System Name.
-     * Usually Hostname except multi-star systems with planets orbiting different stars.
-     */
-    sys_name: string,
-    /** Number of Stars. */
-    sy_snum: number,
-    /** Number of Planets */
-    sy_pnum: number,
-    /** Distance, in parsecs. */
-    sy_dist?: number,
-
-    /** Orbital Period, in days. */
-
-    /** Orbital Semi-Major Axis, in AU. */
-    pl_orbsmax?: number,
-    /** Planet Radius, in Earth Radius. */
-    pl_rade?: number,
-    /** Planet Mass, in Earth Mass. */
-    pl_bmasse?: number,
-    /** Orbital Eccentricity. */
-    pl_orbeccen?: number,
-
-    /** Spectral Type. */
-    st_spectype?: string,
-    /** Stellar Radius, in solar radius. */
-    st_rad?: number,
-    /** Stellar Mass, in solar mass. */
-    st_mass?: number,
-}
-
-interface Margin {
-    top: number;
-    bottom: number;
-    left: number;
-    right: number;
-}
-interface DrawConfig {
-    // parent: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-    parent: string;
-    width: number;
-    height: number;
-    margin?: Margin;
-}
-
-interface ChartConfig {
-    xAxisLabel: string;
-    yAxisLabel: string;
-}
-
-
 
 function parseRecord(row: d3.DSVRowString<string>): PlanetInfo {
     return {
@@ -144,6 +80,14 @@ function visualizeData(data: PlanetInfo[]) {
     const starBarChart     = drawAggregateBarChart(data, (d) => `${d.sy_snum}`, { xAxisLabel: "Stars In System", yAxisLabel: yLabel }, drawConfig);
     const planetBarChart   = drawAggregateBarChart(data, (d) => `${d.sy_pnum}`, { xAxisLabel: "Planets in System", yAxisLabel: yLabel }, drawConfig);
     const sequenceBarChart = drawAggregateBarChart(data, spectypeFromPlanet, { xAxisLabel: "Star Sequence", yAxisLabel: yLabel, xOrder: SPEC_SEQUENCE }, drawConfig);
+
+    const discoveryYearMap = d3.rollup(data, (group) => group.length, (info) => info.disc_year);
+    const discoveryYearData = [ ...discoveryYearMap.entries() ].sort((a, b) => a[0] - b[0]);
+    const discoveryYearChart = new LineChart(discoveryYearData, {
+        xAxisLabel: "Year",
+        xTickFormat: (d) => "'" + `${d}`.substring(2),
+        yAxisLabel: "Exoplanets Discovered"
+    }, drawConfig);
 
     const radiusMassMap = data
         .map((d) => [ d.pl_rade, d.pl_bmasse ] as const)

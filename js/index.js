@@ -66,6 +66,13 @@ function visualizeData(data) {
     const starBarChart = drawAggregateBarChart(data, (d) => `${d.sy_snum}`, { xAxisLabel: "Stars In System", yAxisLabel: yLabel }, drawConfig);
     const planetBarChart = drawAggregateBarChart(data, (d) => `${d.sy_pnum}`, { xAxisLabel: "Planets in System", yAxisLabel: yLabel }, drawConfig);
     const sequenceBarChart = drawAggregateBarChart(data, spectypeFromPlanet, { xAxisLabel: "Star Sequence", yAxisLabel: yLabel, xOrder: SPEC_SEQUENCE }, drawConfig);
+    const discoveryYearMap = d3.rollup(data, (group) => group.length, (info) => info.disc_year);
+    const discoveryYearData = [...discoveryYearMap.entries()].sort((a, b) => a[0] - b[0]);
+    const discoveryYearChart = new LineChart(discoveryYearData, {
+        xAxisLabel: "Year",
+        xTickFormat: (d) => "'" + `${d}`.substring(2),
+        yAxisLabel: "Exoplanets Discovered"
+    }, drawConfig);
     const radiusMassMap = data
         .map((d) => [d.pl_rade, d.pl_bmasse])
         .filter(([r, m]) => r !== undefined && m !== undefined);
