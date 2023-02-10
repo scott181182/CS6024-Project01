@@ -2,8 +2,15 @@ interface ScatterConfig extends ChartConfig<number, number> {
     xScale?: "linear" | "log";
     yScale?: "linear" | "log";
 }
+interface ScatterDataPoint {
+    x: number;
+    y: number;
+    r?: number;
+    color?: string;
+    tooltip?: string;
+}
 declare class ScatterPlot {
-    protected data: [number, number][];
+    protected data: ScatterDataPoint[];
     protected scatterConfig: ScatterConfig;
     protected drawConfig: DrawConfig;
     protected svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>;
@@ -12,18 +19,14 @@ declare class ScatterPlot {
     protected yScale: d3.ScaleContinuousNumeric<number, number, never>;
     protected xAxis: d3.Axis<d3.NumberValue>;
     protected yAxis: d3.Axis<d3.NumberValue>;
-    constructor(data: [number, number][], scatterConfig: ScatterConfig, drawConfig: DrawConfig);
+    protected tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, any>;
+    constructor(data: ScatterDataPoint[], scatterConfig: ScatterConfig, drawConfig: DrawConfig);
     render(): void;
 }
 declare const EARTH_MASS = 5.97;
 declare const EARTH_DIAMETER = 12756;
-declare const SOL_PLANETS: {
-    name: string;
-    mass: number;
-    radius: number;
-    color: string;
-}[];
+declare const SOL_PLANETS: ScatterDataPoint[];
 declare class PlanetScatterPlot extends ScatterPlot {
-    render(): void;
+    constructor(data: ScatterDataPoint[], scatterConfig: ScatterConfig, drawConfig: DrawConfig);
 }
 //# sourceMappingURL=ScatterPlot.d.ts.map

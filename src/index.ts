@@ -90,14 +90,18 @@ function visualizeData(data: PlanetInfo[]) {
     }, drawConfig);
 
     const radiusMassMap = data
-        .map((d) => [ d.pl_rade, d.pl_bmasse ] as const)
-        .filter(([ r, m ]) => r !== undefined && m !== undefined) as [number, number][];
+        .map((d) => ({ x: d.pl_rade!, y: d.pl_bmasse!, tooltip: d.pl_name }))
+        .filter(({ x, y }) => x !== undefined && y !== undefined);
     const scatter = new PlanetScatterPlot(radiusMassMap, {
         xAxisLabel: "Planet Radius (earths)",
         yAxisLabel: "Planet Mass (earths)",
         yScale: "log",
         xScale: "log",
-    }, drawConfig);
+    }, {
+        ...drawConfig,
+        parent: "#big-row",
+        className: "col-12"
+    });
 }
 
 

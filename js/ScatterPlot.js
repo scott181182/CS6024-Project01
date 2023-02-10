@@ -5,14 +5,12 @@ class ScatterPlot {
         this.scatterConfig = scatterConfig;
         this.drawConfig = drawConfig;
         const margin = drawConfig.margin || { top: 0, bottom: 0, left: 0, right: 0 };
-        const totalWidth = drawConfig.width + margin.left + margin.right;
-        const totalHeight = drawConfig.height + margin.top + margin.bottom;
-        this.svg = createSVG(drawConfig.parent, totalWidth, totalHeight).append("svg");
+        this.svg = createSVG(drawConfig);
         this.ctx = this.svg.append("g")
             .attr("class", "scatter-plot")
             .attr("transform", `translate(${margin.left}, ${margin.top})`);
-        const xDomain = d3.extent(data, ([x, _]) => x);
-        const yDomain = d3.extent(data, ([_, y]) => y);
+        const xDomain = d3.extent(data, ({ x }) => x);
+        const yDomain = d3.extent(data, ({ y }) => y);
         this.xScale = scatterConfig.xScale === "log" ?
             d3.scaleLog(xDomain, [0, drawConfig.width]) :
             d3.scaleLinear(xDomain, [0, drawConfig.width]);
@@ -39,79 +37,97 @@ class ScatterPlot {
             .attr("y", 50)
             .attr("transform", "rotate(-90)")
             .text(this.scatterConfig.yAxisLabel);
+        this.tooltip = d3.select("body").append("div")
+            .attr("class", "scatter-tooltip")
+            .style("display", "none");
         this.render();
     }
     render() {
         this.ctx.selectAll(".scatter-point")
             .data(this.data).join("circle")
             .attr("class", "scatter-point")
-            .attr("cx", (d) => this.xScale(d[0]))
-            .attr("cy", (d) => this.yScale(d[1]))
-            .attr("r", 2);
+            .attr("cx", (d) => this.xScale(d.x))
+            .attr("cy", (d) => this.yScale(d.y))
+            .attr("r", (d) => d.r || 2)
+            .attr("fill", (d) => d.color || "#000")
+            .on("mouseover", (ev, d) => {
+            if (!d.tooltip) {
+                return;
+            }
+            this.tooltip
+                .style("top", (ev.layerY + 5) + "px")
+                .style("left", (ev.layerX + 5) + "px")
+                .style("display", "block")
+                .text(d.tooltip);
+        })
+            .on("mouseout", () => {
+            this.tooltip.style("display", "none");
+        });
     }
 }
 const EARTH_MASS = 5.97; // 10^24 kg
 const EARTH_DIAMETER = 12756; // km
 const SOL_PLANETS = [
     {
-        name: "Mercury",
-        mass: 0.330 / EARTH_MASS,
-        radius: 4879 / EARTH_DIAMETER,
-        color: "#726658"
+        tooltip: "Mercury",
+        y: 0.330 / EARTH_MASS,
+        x: 4879 / EARTH_DIAMETER,
+        color: "#726658",
+        r: 4,
     },
     {
-        name: "Venus",
-        mass: 4.87 / EARTH_MASS,
-        radius: 12104 / EARTH_DIAMETER,
-        color: "#efecdd"
+        tooltip: "Venus",
+        y: 4.87 / EARTH_MASS,
+        x: 12104 / EARTH_DIAMETER,
+        color: "#efecdd",
+        r: 4,
     },
     {
-        name: "Earth",
-        mass: 1,
-        radius: 1,
-        color: "#a49fb3"
+        tooltip: "Earth",
+        y: 1,
+        x: 1,
+        color: "#a49fb3",
+        r: 4,
     },
     {
-        name: "Mars",
-        mass: 0.642 / EARTH_MASS,
-        radius: 6792 / EARTH_DIAMETER,
-        color: "#896545"
+        tooltip: "Mars",
+        y: 0.642 / EARTH_MASS,
+        x: 6792 / EARTH_DIAMETER,
+        color: "#896545",
+        r: 4,
     },
     {
-        name: "Jupiter",
-        mass: 1898 / EARTH_MASS,
-        radius: 142984 / EARTH_DIAMETER,
-        color: "#c3beab"
+        tooltip: "Jupiter",
+        y: 1898 / EARTH_MASS,
+        x: 142984 / EARTH_DIAMETER,
+        color: "#c3beab",
+        r: 4,
     },
     {
-        name: "Saturn",
-        mass: 568 / EARTH_MASS,
-        radius: 120536 / EARTH_DIAMETER,
-        color: "#c9b38e"
+        tooltip: "Saturn",
+        y: 568 / EARTH_MASS,
+        x: 120536 / EARTH_DIAMETER,
+        color: "#c9b38e",
+        r: 4,
     },
     {
-        name: "Uranus",
-        mass: 86.8 / EARTH_MASS,
-        radius: 51118 / EARTH_DIAMETER,
-        color: "#a8c0c2"
+        tooltip: "Uranus",
+        y: 86.8 / EARTH_MASS,
+        x: 51118 / EARTH_DIAMETER,
+        color: "#a8c0c2",
+        r: 4,
     },
     {
-        name: "Neptune",
-        mass: 102 / EARTH_MASS,
-        radius: 49528 / EARTH_DIAMETER,
-        color: "#91afba"
+        tooltip: "Neptune",
+        y: 102 / EARTH_MASS,
+        x: 49528 / EARTH_DIAMETER,
+        color: "#91afba",
+        r: 4,
     },
 ];
 class PlanetScatterPlot extends ScatterPlot {
-    render() {
-        super.render();
-        this.ctx.selectAll("sol-scatter-points")
-            .data(SOL_PLANETS).join("circle")
-            .attr("class", "scatter-point")
-            .attr("cx", (d) => this.xScale(d.radius))
-            .attr("cy", (d) => this.yScale(d.mass))
-            .attr("r", 4)
-            .attr("fill", (d) => d.color);
+    constructor(data, scatterConfig, drawConfig) {
+        super([...data, ...SOL_PLANETS], scatterConfig, drawConfig);
     }
 }
 //# sourceMappingURL=ScatterPlot.js.map

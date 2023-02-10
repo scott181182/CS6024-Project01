@@ -1,9 +1,13 @@
 
 
 
-function createSVG(parent: string, width: number, height: number) {
-    return d3.select(parent).append("svg")
-        .attr("class", "col-6")
+function createSVG(drawConfig: DrawConfig) {
+    const margin = drawConfig.margin || { top: 0, bottom: 0, left: 0, right: 0 };
+    const width = drawConfig.width + margin.left + margin.right;
+    const height = drawConfig.height + margin.top + margin.bottom;
+
+    return d3.select(drawConfig.parent).append("svg")
+        .attr("class", drawConfig.className || "col-6")
         // .attr("width", width)
         // .attr("height", height)
         .attr("viewBox", `0 0 ${width} ${height}`);

@@ -47,6 +47,7 @@ interface DrawConfig {
     width: number;
     height: number;
     margin?: Margin;
+    className?: string;
 }
 interface ChartConfig<X, Y> {
     xAxisLabel: string;

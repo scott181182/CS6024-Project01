@@ -5,9 +5,7 @@ class LineChart {
         this.lineConfig = lineConfig;
         this.drawConfig = drawConfig;
         const margin = drawConfig.margin || { top: 0, bottom: 0, left: 0, right: 0 };
-        const totalWidth = drawConfig.width + margin.left + margin.right;
-        const totalHeight = drawConfig.height + margin.top + margin.bottom;
-        this.svg = createSVG(drawConfig.parent, totalWidth, totalHeight).append("svg");
+        this.svg = createSVG(drawConfig);
         this.ctx = this.svg.append("g")
             .attr("class", "line-chart")
             .attr("transform", `translate(${margin.left}, ${margin.top})`);

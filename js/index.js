@@ -74,14 +74,14 @@ function visualizeData(data) {
         yAxisLabel: "Exoplanets Discovered"
     }, drawConfig);
     const radiusMassMap = data
-        .map((d) => [d.pl_rade, d.pl_bmasse])
-        .filter(([r, m]) => r !== undefined && m !== undefined);
+        .map((d) => ({ x: d.pl_rade, y: d.pl_bmasse, tooltip: d.pl_name }))
+        .filter(({ x, y }) => x !== undefined && y !== undefined);
     const scatter = new PlanetScatterPlot(radiusMassMap, {
         xAxisLabel: "Planet Radius (earths)",
         yAxisLabel: "Planet Mass (earths)",
         yScale: "log",
         xScale: "log",
-    }, drawConfig);
+    }, Object.assign(Object.assign({}, drawConfig), { parent: "#big-row", className: "col-12" }));
 }
 function drawAggregateBarChart(data, keyFn, barConfig, drawConfig) {
     const countMap = d3.rollup(data, (a) => a.length, keyFn);

@@ -1,4 +1,4 @@
-declare function createSVG(parent: string, width: number, height: number): d3.Selection<SVGSVGElement, unknown, HTMLElement, any>;
+declare function createSVG(drawConfig: DrawConfig): d3.Selection<SVGSVGElement, unknown, HTMLElement, any>;
 declare function wrapAxisText(text: d3.Selection<d3.BaseType, unknown, SVGGElement, any>, width: number): void;
 declare const SPEC_SEQUENCE: string[];
 declare function spectypeFromPlanet(info: PlanetInfo): string;

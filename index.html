@@ -33,16 +33,11 @@
     </nav>
     <main class="container-fluid">
         <div class="row">
-            <section id="table-section" class="col-4">
-                <!-- Data inserted into here -->
-                <!-- <table id="planet-table" class="table table-sm table-hover">
-                </table> -->
-            </section>
-            <section class="col-8">
-                <div class="row" id="chart-row">
-                    <div class="col-6">
-                        <div id="selection-card" class="card m-4 h-100">
-                            <div class="card-body">
+            <div class="col-4">
+                <div class="row">
+                    <div class="col-12">
+                        <div id="selection-card" class="card m-4">
+                            <div class="card-body overflow-y-auto">
                                 <h1 class="card-title h5"><i>No selection</i></h1>
                                 <span class="card-subtitle small text-muted"><i>Planet Data</i></span>
                                 <hr/>
@@ -52,6 +47,17 @@
                             </div>
                         </div>
                     </div>
+                    <section id="table-section" class="col-12">
+                        <!-- Data inserted into here -->
+                        <!-- <table id="planet-table" class="table table-sm table-hover">
+                        </table> -->
+                    </section>
+                </div>
+            </div>
+            <section class="col-8">
+                <div class="row" id="chart-row">
+                </div>
+                <div class="row" id="big-row">
                 </div>
             </section>
         </div>
