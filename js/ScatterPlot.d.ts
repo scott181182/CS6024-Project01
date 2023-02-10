@@ -2,7 +2,7 @@ interface ScatterConfig extends ChartConfig<number, number> {
     xScale?: "linear" | "log";
     yScale?: "linear" | "log";
 }
-interface ScatterDataPoint {
+interface ScatterData {
     x: number;
     y: number;
     r?: number;
@@ -10,7 +10,7 @@ interface ScatterDataPoint {
     tooltip?: string;
 }
 declare class ScatterPlot {
-    protected data: ScatterDataPoint[];
+    protected data: ScatterData[];
     protected scatterConfig: ScatterConfig;
     protected drawConfig: DrawConfig;
     protected svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>;
@@ -20,13 +20,13 @@ declare class ScatterPlot {
     protected xAxis: d3.Axis<d3.NumberValue>;
     protected yAxis: d3.Axis<d3.NumberValue>;
     protected tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, any>;
-    constructor(data: ScatterDataPoint[], scatterConfig: ScatterConfig, drawConfig: DrawConfig);
+    constructor(data: ScatterData[], scatterConfig: ScatterConfig, drawConfig: DrawConfig);
     render(): void;
 }
 declare const EARTH_MASS = 5.97;
 declare const EARTH_DIAMETER = 12756;
-declare const SOL_PLANETS: ScatterDataPoint[];
+declare const SOL_PLANETS: ScatterData[];
 declare class PlanetScatterPlot extends ScatterPlot {
-    constructor(data: ScatterDataPoint[], scatterConfig: ScatterConfig, drawConfig: DrawConfig);
+    constructor(data: ScatterData[], scatterConfig: ScatterConfig, drawConfig: DrawConfig);
 }
 //# sourceMappingURL=ScatterPlot.d.ts.map

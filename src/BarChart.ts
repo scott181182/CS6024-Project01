@@ -6,7 +6,12 @@ interface BarConfig extends ChartConfig<string, number> {
     xSort?: (a: string, b: string) => number;
 }
 
-
+interface BarData {
+    label: string;
+    value: number;
+    tooltip?: string;
+    color?: string;
+}
 
 class BarChart
 {
@@ -21,7 +26,7 @@ class BarChart
 
 
     public constructor(
-        private data: [string, number][],
+        private data: BarData[],
         private barConfig: BarConfig,
         private drawConfig: DrawConfig,
     ) {
@@ -31,8 +36,8 @@ class BarChart
             .attr("class", "bar-chart")
             .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-        const xDomain = data.map(([x, _]) => x);
-        const yDomain = [0, d3.max(data, ([_, y]) => y)!] as const;
+        const xDomain = data.map(({ label }) => label);
+        const yDomain = [0, d3.max(data, ({ value }) => value)!] as const;
 
         this.xScale = d3.scaleBand()
             .domain(xDomain)
@@ -72,9 +77,10 @@ class BarChart
     public render() {
         this.ctx.selectAll(".bar").data(this.data).join("rect")
             .attr("class", "bar")
-            .attr("x", (d) => this.xScale(d[0])!)
-            .attr("y", (d) => this.yScale(d[1]))
+            .attr("x", (d) => this.xScale(d.label)!)
+            .attr("y", (d) => this.yScale(d.value))
             .attr("width", this.xScale.bandwidth())
-            .attr("height", (d) => this.drawConfig.height - this.yScale(d[1]));
+            .attr("height", (d) => this.drawConfig.height - this.yScale(d.value))
+            .attr("fill", (d) => d.color || "#000");
     }
 }

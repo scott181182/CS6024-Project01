@@ -109,11 +109,12 @@ function visualizeData(data: PlanetInfo[]) {
 
 function drawAggregateBarChart(data: PlanetInfo[], keyFn: (info: PlanetInfo) => string, barConfig: BarConfig, drawConfig: DrawConfig) {
     const countMap = d3.rollup(data, (a) => a.length, keyFn);
-    const countData = [...countMap.entries()].filter(([k, _]) => !!k);
+    const countData = [...countMap.entries()].filter(([k, _]) => !!k)
+        .map(([ label, value ]) => ({ label, value }));
     const sortFn = barConfig.xSort ||
         (barConfig.xOrder ? ((a: string, b: string) => barConfig.xOrder!.indexOf(a) - barConfig.xOrder!.indexOf(b)) :
             (a: string, b: string) => a.localeCompare(b));
-    countData.sort((a, b) => sortFn(a[0], b[0]));
+    countData.sort((a, b) => sortFn(a.label, b.label));
 
     return new BarChart(countData, barConfig, drawConfig);
 }

@@ -9,8 +9,8 @@ class BarChart {
         this.ctx = this.svg.append("g")
             .attr("class", "bar-chart")
             .attr("transform", `translate(${margin.left}, ${margin.top})`);
-        const xDomain = data.map(([x, _]) => x);
-        const yDomain = [0, d3.max(data, ([_, y]) => y)];
+        const xDomain = data.map(({ label }) => label);
+        const yDomain = [0, d3.max(data, ({ value }) => value)];
         this.xScale = d3.scaleBand()
             .domain(xDomain)
             .range([0, drawConfig.width])
@@ -45,10 +45,11 @@ class BarChart {
     render() {
         this.ctx.selectAll(".bar").data(this.data).join("rect")
             .attr("class", "bar")
-            .attr("x", (d) => this.xScale(d[0]))
-            .attr("y", (d) => this.yScale(d[1]))
+            .attr("x", (d) => this.xScale(d.label))
+            .attr("y", (d) => this.yScale(d.value))
             .attr("width", this.xScale.bandwidth())
-            .attr("height", (d) => this.drawConfig.height - this.yScale(d[1]));
+            .attr("height", (d) => this.drawConfig.height - this.yScale(d.value))
+            .attr("fill", (d) => d.color || "#000");
     }
 }
 //# sourceMappingURL=BarChart.js.map

@@ -6,7 +6,7 @@ interface ScatterConfig extends ChartConfig<number, number> {
     yScale?: "linear" | "log";
 }
 
-interface ScatterDataPoint {
+interface ScatterData {
     x: number;
     y: number;
     r?: number;
@@ -29,7 +29,7 @@ class ScatterPlot
 
 
     public constructor(
-        protected data: ScatterDataPoint[],
+        protected data: ScatterData[],
         protected scatterConfig: ScatterConfig,
         protected drawConfig: DrawConfig,
     ) {
@@ -104,7 +104,7 @@ class ScatterPlot
 
 const EARTH_MASS = 5.97 // 10^24 kg
 const EARTH_DIAMETER = 12756 // km
-const SOL_PLANETS: ScatterDataPoint[] = [
+const SOL_PLANETS: ScatterData[] = [
     {
         tooltip: "Mercury",
         y: 0.330 / EARTH_MASS,
@@ -165,7 +165,7 @@ const SOL_PLANETS: ScatterDataPoint[] = [
 class PlanetScatterPlot extends ScatterPlot
 {
     public constructor(
-        data: ScatterDataPoint[],
+        data: ScatterData[],
         scatterConfig: ScatterConfig,
         drawConfig: DrawConfig,
     ) {

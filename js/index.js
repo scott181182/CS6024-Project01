@@ -85,11 +85,12 @@ function visualizeData(data) {
 }
 function drawAggregateBarChart(data, keyFn, barConfig, drawConfig) {
     const countMap = d3.rollup(data, (a) => a.length, keyFn);
-    const countData = [...countMap.entries()].filter(([k, _]) => !!k);
+    const countData = [...countMap.entries()].filter(([k, _]) => !!k)
+        .map(([label, value]) => ({ label, value }));
     const sortFn = barConfig.xSort ||
         (barConfig.xOrder ? ((a, b) => barConfig.xOrder.indexOf(a) - barConfig.xOrder.indexOf(b)) :
             (a, b) => a.localeCompare(b));
-    countData.sort((a, b) => sortFn(a[0], b[0]));
+    countData.sort((a, b) => sortFn(a.label, b.label));
     return new BarChart(countData, barConfig, drawConfig);
 }
 //# sourceMappingURL=index.js.map

@@ -2,6 +2,12 @@ interface BarConfig extends ChartConfig<string, number> {
     xOrder?: string[];
     xSort?: (a: string, b: string) => number;
 }
+interface BarData {
+    label: string;
+    value: number;
+    tooltip?: string;
+    color?: string;
+}
 declare class BarChart {
     private data;
     private barConfig;
@@ -12,7 +18,7 @@ declare class BarChart {
     private yScale;
     private xAxis;
     private yAxis;
-    constructor(data: [string, number][], barConfig: BarConfig, drawConfig: DrawConfig);
+    constructor(data: BarData[], barConfig: BarConfig, drawConfig: DrawConfig);
     render(): void;
 }
 //# sourceMappingURL=BarChart.d.ts.map
