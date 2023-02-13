@@ -45,7 +45,7 @@ class ScatterPlot {
     render() {
         this.ctx.selectAll(".scatter-point")
             .data(this.data).join("circle")
-            .attr("class", "scatter-point")
+            .attr("class", "scatter-point data-element")
             .attr("cx", (d) => this.xScale(d.x))
             .attr("cy", (d) => this.yScale(d.y))
             .attr("r", (d) => d.r || 2)

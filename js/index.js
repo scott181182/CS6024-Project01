@@ -65,7 +65,7 @@ function visualizeData(data) {
     const yLabel = "# of Exoplanets";
     const starBarChart = drawAggregateBarChart(data, (d) => `${d.sy_snum}`, { xAxisLabel: "Stars In System", yAxisLabel: yLabel }, drawConfig);
     const planetBarChart = drawAggregateBarChart(data, (d) => `${d.sy_pnum}`, { xAxisLabel: "Planets in System", yAxisLabel: yLabel }, drawConfig);
-    const sequenceBarChart = drawAggregateBarChart(data, spectypeFromPlanet, { xAxisLabel: "Star Sequence", yAxisLabel: yLabel, xOrder: SPEC_SEQUENCE }, drawConfig);
+    const sequenceBarChart = drawSpectypeBarChart(data, { xAxisLabel: "Star Sequence", yAxisLabel: yLabel }, Object.assign(Object.assign({}, drawConfig), { margin: { left: 130, top: 50, right: 50, bottom: 50 } }));
     const discoveryYearMap = d3.rollup(data, (group) => group.length, (info) => info.disc_year);
     const discoveryYearData = [...discoveryYearMap.entries()].sort((a, b) => a[0] - b[0]);
     const discoveryYearChart = new LineChart(discoveryYearData, {
@@ -87,10 +87,19 @@ function drawAggregateBarChart(data, keyFn, barConfig, drawConfig) {
     const countMap = d3.rollup(data, (a) => a.length, keyFn);
     const countData = [...countMap.entries()].filter(([k, _]) => !!k)
         .map(([label, value]) => ({ label, value }));
-    const sortFn = barConfig.xSort ||
-        (barConfig.xOrder ? ((a, b) => barConfig.xOrder.indexOf(a) - barConfig.xOrder.indexOf(b)) :
+    const sortFn = barConfig.labelSort ||
+        (barConfig.labelOrder ? ((a, b) => barConfig.labelOrder.indexOf(a) - barConfig.labelOrder.indexOf(b)) :
             (a, b) => a.localeCompare(b));
     countData.sort((a, b) => sortFn(a.label, b.label));
     return new BarChart(countData, barConfig, drawConfig);
+}
+function drawSpectypeBarChart(data, barConfig, drawConfig) {
+    const countMap = d3.rollup(data, (a) => a.length, spectypeFromPlanet);
+    const countData = [...countMap.entries()].filter(([k, _]) => !!k)
+        .map(([label, value]) => (Object.assign(Object.assign({ label }, SPECTYPE_CONFIG.find((l) => l.label === label)), { value })));
+    const sortFn = ((a, b) => SPEC_SEQUENCE.indexOf(a) - SPEC_SEQUENCE.indexOf(b));
+    countData.sort((a, b) => sortFn(a.label, b.label));
+    console.log(countData);
+    return new HorizontalBarChart(countData, barConfig, drawConfig);
 }
 //# sourceMappingURL=index.js.map

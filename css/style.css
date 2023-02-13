@@ -4,13 +4,20 @@
     height: 30vh;
 }
 
-.scatter-point {
-    opacity: 0.5;
-    transition: opacity 0.25s;
+.data-element {
+    opacity: 0.6;
+    transition: opacity 0.2s;
     cursor: pointer;
 }
-.scatter-point:hover {
+.data-element:hover {
     opacity: 1;
+}
+
+.bar {
+    stroke: #000;
+    stroke-width: 1px;
+
+    /* transform: translateY(1px); */
 }
 
 .scatter-tooltip {

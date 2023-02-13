@@ -34,6 +34,49 @@ function wrapAxisText(text, width) {
     });
 }
 const SPEC_SEQUENCE = ["O", "B", "A", "F", "G", "K", "M", "White Dwarf", "Cool Dwarf", "Subdwarf"];
+const SPECTYPE_CONFIG = [
+    {
+        label: "O",
+        color: "#9bb0ff",
+        tooltip: "",
+    }, {
+        label: "B",
+        color: "#aabfff",
+        tooltip: "",
+    }, {
+        label: "A",
+        color: "#cad7ff",
+        tooltip: "",
+    }, {
+        label: "F",
+        color: "#f8f7ff",
+        tooltip: "",
+    }, {
+        label: "G",
+        color: "#fff4ea",
+        tooltip: "",
+    }, {
+        label: "K",
+        color: "#ffd2a1",
+        tooltip: "",
+    }, {
+        label: "M",
+        color: "#ffcc6f",
+        tooltip: "",
+    }, {
+        label: "White Dwarf",
+        color: "",
+        tooltip: "",
+    }, {
+        label: "Cool Dwarf",
+        color: "",
+        tooltip: "",
+    }, {
+        label: "Subdwarf",
+        color: "",
+        tooltip: "",
+    },
+];
 function spectypeFromPlanet(info) {
     if (!info.st_spectype) {
         return "";

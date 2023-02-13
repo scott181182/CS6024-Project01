@@ -42,6 +42,49 @@ function wrapAxisText(text: d3.Selection<d3.BaseType, unknown, SVGGElement, any>
 
 
 const SPEC_SEQUENCE = ["O", "B", "A", "F", "G", "K", "M", "White Dwarf", "Cool Dwarf", "Subdwarf"];
+const SPECTYPE_CONFIG: Partial<BarData>[] = [
+    {
+        label: "O",
+        color: "#9bb0ff",
+        tooltip: "",
+    }, {
+        label: "B",
+        color: "#aabfff",
+        tooltip: "",
+    }, {
+        label: "A",
+        color: "#cad7ff",
+        tooltip: "",
+    }, {
+        label: "F",
+        color: "#f8f7ff",
+        tooltip: "",
+    }, {
+        label: "G",
+        color: "#fff4ea",
+        tooltip: "",
+    }, {
+        label: "K",
+        color: "#ffd2a1",
+        tooltip: "",
+    }, {
+        label: "M",
+        color: "#ffcc6f",
+        tooltip: "",
+    }, {
+        label: "White Dwarf",
+        color: "",
+        tooltip: "",
+    }, {
+        label: "Cool Dwarf",
+        color: "",
+        tooltip: "",
+    }, {
+        label: "Subdwarf",
+        color: "",
+        tooltip: "",
+    },
+]
 function spectypeFromPlanet(info: PlanetInfo) {
     if (!info.st_spectype) { return ""; }
 
