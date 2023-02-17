@@ -81,6 +81,8 @@ function visualizeData(data: PlanetInfo[]) {
     const planetBarChart   = drawAggregateBarChart(data, (d) => `${d.sy_pnum}`, { xAxisLabel: "Planets in System", yAxisLabel: yLabel }, drawConfig);
     const sequenceBarChart = drawSpectypeBarChart(data, { xAxisLabel: "Star Sequence", yAxisLabel: yLabel }, {
         ...drawConfig,
+        className: "col-12",
+        width: drawConfig.width * 2,
         margin: { left: 130, top: 50, right: 50, bottom: 50 }
     });
 

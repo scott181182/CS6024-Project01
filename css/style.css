@@ -20,7 +20,7 @@
     /* transform: translateY(1px); */
 }
 
-.scatter-tooltip {
+#tooltip {
     position: absolute;
     z-index: 1000;
 

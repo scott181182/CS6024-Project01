@@ -46,43 +46,43 @@ const SPECTYPE_CONFIG: Partial<BarData>[] = [
     {
         label: "O",
         color: "#9bb0ff",
-        tooltip: "",
+        tooltip: "O-class: The hottest stars burn blue at over 25,000 K",
     }, {
         label: "B",
         color: "#aabfff",
-        tooltip: "",
+        tooltip: "B-class: These blue or blue-white stars burn between 11,000 and 25,000 K",
     }, {
         label: "A",
         color: "#cad7ff",
-        tooltip: "",
+        tooltip: "A-class: Blue-white stars that burn between 7,500 and 11,000 K",
     }, {
         label: "F",
         color: "#f8f7ff",
-        tooltip: "",
+        tooltip: "F-class: White or blue-white stars that burn between 6,000 and 7,500 K",
     }, {
         label: "G",
         color: "#fff4ea",
-        tooltip: "",
+        tooltip: "G-class: Yellow to white stars that burn between 5,000 and 6,000 K",
     }, {
         label: "K",
         color: "#ffd2a1",
-        tooltip: "",
+        tooltip: "K-class: Orange to red colored stars that burn between 3,500 and 5,000 K",
     }, {
         label: "M",
         color: "#ffcc6f",
-        tooltip: "",
+        tooltip: "M-class: Red stars that burn up to 3,500 K",
     }, {
         label: "White Dwarf",
-        color: "",
-        tooltip: "",
+        color: "#fff",
+        tooltip: "White Dwarfs: Non-main sequence stars that remain after a red giant sheds it outer layers. Can burn very hot.",
     }, {
         label: "Cool Dwarf",
-        color: "",
-        tooltip: "",
+        color: "#ef5858",
+        tooltip: "Cool Dwarfs: A special M-class dwarf star that burns under 2,700 K",
     }, {
         label: "Subdwarf",
-        color: "",
-        tooltip: "",
+        color: "#527de8",
+        tooltip: "Subdwarfs: A variable class of stars that exist under the main sequence and can burn at many temperatures",
     },
 ]
 function spectypeFromPlanet(info: PlanetInfo) {
@@ -96,4 +96,26 @@ function spectypeFromPlanet(info: PlanetInfo) {
     if (spectype.startsWith("SD")) { return "Subdwarf"; }
 
     return info.st_spectype;
+}
+
+
+
+const tooltipElement = d3.select("#tooltip");
+function enableTooltip<Datum, PDatum>(
+    sel: d3.Selection<d3.BaseType, Datum, d3.BaseType, PDatum>,
+    ttFn: (d: Datum) => string | undefined
+) {
+    sel
+        .on("mouseover", (ev, d) => {
+            const tooltip = ttFn(d);
+            if(!tooltip) { return; }
+            tooltipElement
+                .style("top", (ev.layerY + 5) + "px")
+                .style("left", (ev.layerX + 5) + "px")
+                .style("visibility", "visible")
+                .html(tooltip)
+        })
+        .on("mouseout", () => {
+            tooltipElement.style("visibility", "hidden")
+        });
 }

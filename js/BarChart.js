@@ -69,7 +69,7 @@ class HorizontalBarChart {
             .range([0, drawConfig.width]);
         this.yScale = d3.scaleBand()
             .domain(yDomain)
-            .range([drawConfig.height, 0])
+            .range([0, drawConfig.height])
             .padding(0.4);
         this.xAxis = d3.axisBottom(this.xScale);
         this.yAxis = d3.axisLeft(this.yScale);
@@ -94,13 +94,14 @@ class HorizontalBarChart {
         this.render();
     }
     render() {
-        this.ctx.selectAll(".bar").data(this.data).join("rect")
+        const barSel = this.ctx.selectAll(".bar").data(this.data).join("rect")
             .attr("class", "bar data-element")
             .attr("y", (d) => this.yScale(d.label))
             .attr("x", 0)
             .attr("height", this.yScale.bandwidth())
             .attr("width", (d) => this.xScale(d.value))
             .attr("fill", (d) => d.color || "#000");
+        enableTooltip(barSel, (d) => d.tooltip);
     }
 }
 //# sourceMappingURL=BarChart.js.map

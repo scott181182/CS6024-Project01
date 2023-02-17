@@ -79,24 +79,15 @@ class ScatterPlot
     }
 
     public render() {
-        this.ctx.selectAll(".scatter-point")
+        const pointSel = this.ctx.selectAll(".scatter-point")
             .data(this.data).join("circle")
                 .attr("class", "scatter-point data-element")
                 .attr("cx", (d) => this.xScale(d.x)!)
                 .attr("cy", (d) => this.yScale(d.y))
                 .attr("r", (d) => d.r || 2)
-                .attr("fill", (d) => d.color || "#000")
-                .on("mouseover", (ev, d) => {
-                    if(!d.tooltip) { return; }
-                    this.tooltip
-                        .style("top", (ev.layerY + 5) + "px")
-                        .style("left", (ev.layerX + 5) + "px")
-                        .style("display", "block")
-                        .text(d.tooltip)
-                })
-                .on("mouseout", () => {
-                    this.tooltip.style("display", "none")
-                });
+                .attr("fill", (d) => d.color || "#000");
+
+        enableTooltip(pointSel, (d) => d.tooltip);
     }
 }
 

@@ -65,7 +65,7 @@ function visualizeData(data) {
     const yLabel = "# of Exoplanets";
     const starBarChart = drawAggregateBarChart(data, (d) => `${d.sy_snum}`, { xAxisLabel: "Stars In System", yAxisLabel: yLabel }, drawConfig);
     const planetBarChart = drawAggregateBarChart(data, (d) => `${d.sy_pnum}`, { xAxisLabel: "Planets in System", yAxisLabel: yLabel }, drawConfig);
-    const sequenceBarChart = drawSpectypeBarChart(data, { xAxisLabel: "Star Sequence", yAxisLabel: yLabel }, Object.assign(Object.assign({}, drawConfig), { margin: { left: 130, top: 50, right: 50, bottom: 50 } }));
+    const sequenceBarChart = drawSpectypeBarChart(data, { xAxisLabel: "Star Sequence", yAxisLabel: yLabel }, Object.assign(Object.assign({}, drawConfig), { className: "col-12", width: drawConfig.width * 2, margin: { left: 130, top: 50, right: 50, bottom: 50 } }));
     const discoveryYearMap = d3.rollup(data, (group) => group.length, (info) => info.disc_year);
     const discoveryYearData = [...discoveryYearMap.entries()].sort((a, b) => a[0] - b[0]);
     const discoveryYearChart = new LineChart(discoveryYearData, {
