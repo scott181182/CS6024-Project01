@@ -54,5 +54,6 @@ interface ChartConfig<X, Y> {
     xTickFormat?: (d: X) => string;
     yAxisLabel: string;
     yTickFormat?: (d: Y) => string;
+    plotUnknown?: boolean;
 }
 //# sourceMappingURL=types.d.ts.map

@@ -1,6 +1,7 @@
 interface BarConfig extends ChartConfig<string, number> {
     labelOrder?: string[];
     labelSort?: (a: string, b: string) => number;
+    colorScheme?: readonly string[];
 }
 interface BarData {
     label: string;
@@ -18,6 +19,7 @@ declare class BarChart {
     private yScale;
     private xAxis;
     private yAxis;
+    private cScale?;
     constructor(data: BarData[], barConfig: BarConfig, drawConfig: DrawConfig);
     render(): void;
 }
@@ -31,6 +33,8 @@ declare class HorizontalBarChart {
     private yScale;
     private xAxis;
     private yAxis;
+    private cScale?;
+    private unknownData?;
     constructor(data: BarData[], barConfig: BarConfig, drawConfig: DrawConfig);
     render(): void;
 }

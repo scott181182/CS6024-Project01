@@ -1,4 +1,15 @@
 
+class InclusiveRange {
+    public constructor(
+        public readonly lower: number,
+        public readonly upper: number,
+    ) {  }
+
+    public contains(n: number) {
+        return n >= this.lower && n <= this.upper;
+    }
+}
+
 
 
 function createSVG(drawConfig: DrawConfig) {
@@ -86,7 +97,7 @@ const SPECTYPE_CONFIG: Partial<BarData>[] = [
     },
 ]
 function spectypeFromPlanet(info: PlanetInfo) {
-    if (!info.st_spectype) { return ""; }
+    if (!info.st_spectype) { return "Unknown"; }
 
     const MAIN_SEQ = ["O", "B", "A", "F", "G", "K", "M"];
     const spectype = info.st_spectype.toUpperCase();
@@ -96,6 +107,14 @@ function spectypeFromPlanet(info: PlanetInfo) {
     if (spectype.startsWith("SD")) { return "Subdwarf"; }
 
     return info.st_spectype;
+}
+
+const HABITABLE_ZONES = {
+    A: new InclusiveRange(8.5, 12.5),
+    F: new InclusiveRange(1.5, 2.2),
+    G: new InclusiveRange(0.95, 1.4),
+    K: new InclusiveRange(0.38, 0.56),
+    M: new InclusiveRange(0.08, 0.12),
 }
 
 
@@ -118,4 +137,19 @@ function enableTooltip<Datum, PDatum>(
         .on("mouseout", () => {
             tooltipElement.style("visibility", "hidden")
         });
+}
+
+function partition<T>(data: T[], partitionFn: (d: T) => boolean): [ T[], T[] ] {
+    const inList: T[] = [];
+    const outList: T[] = [];
+
+    for(const d of data) {
+        if(partitionFn(d)) {
+            inList.push(d);
+        } else {
+            outList.push(d);
+        }
+    }
+
+    return [ inList, outList ];
 }

@@ -4,6 +4,7 @@
 interface BarConfig extends ChartConfig<string, number> {
     labelOrder?: string[];
     labelSort?: (a: string, b: string) => number;
+    colorScheme?: readonly string[]
 }
 
 interface BarData {
@@ -22,6 +23,8 @@ class BarChart
     private yScale: d3.ScaleLinear<number, number, never>;
     private xAxis: d3.Axis<string>;
     private yAxis: d3.Axis<d3.NumberValue>;
+
+    private cScale?: d3.ScaleOrdinal<string, string>;
 
 
 
@@ -46,6 +49,9 @@ class BarChart
         this.yScale = d3.scaleLinear()
             .domain(yDomain)
             .range([drawConfig.height, 0]);
+        if(barConfig.colorScheme) {
+            this.cScale = d3.scaleOrdinal(xDomain, barConfig.colorScheme)
+        }
 
         this.xAxis = d3.axisBottom(this.xScale);
         this.yAxis = d3.axisLeft(this.yScale);
@@ -75,13 +81,14 @@ class BarChart
     }
 
     public render() {
-        this.ctx.selectAll(".bar").data(this.data).join("rect")
+        const barSel = this.ctx.selectAll(".bar").data(this.data).join("rect")
             .attr("class", "bar data-element")
             .attr("x", (d) => this.xScale(d.label)!)
             .attr("y", (d) => this.yScale(d.value))
             .attr("width", this.xScale.bandwidth())
             .attr("height", (d) => this.drawConfig.height - this.yScale(d.value))
-            .attr("fill", (d) => d.color || "#000");
+            .attr("fill", (d) => d.color || this.cScale?.(d.label) || "#000");
+        enableTooltip(barSel, (d) => d.tooltip);
     }
 }
 
@@ -96,6 +103,10 @@ class HorizontalBarChart
     private xAxis: d3.Axis<d3.NumberValue>;
     private yAxis: d3.Axis<string>;
 
+    private cScale?: d3.ScaleOrdinal<string, string>;
+
+    private unknownData?: BarData;
+
 
 
     public constructor(
@@ -103,14 +114,20 @@ class HorizontalBarChart
         private barConfig: BarConfig,
         private drawConfig: DrawConfig,
     ) {
+        if(!barConfig.plotUnknown) {
+            const [ tUnknown, tData ] = partition(data, (d) => d.label === "Unknown");
+            this.unknownData = tUnknown[0];
+            this.data = tData;
+        }
+
         const margin = drawConfig.margin || { top: 0, bottom: 0, left: 0, right: 0 };
         this.svg = createSVG(drawConfig);
         this.ctx = this.svg.append("g")
             .attr("class", "bar-chart")
             .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-        const xDomain = [0, d3.max(data, ({ value }) => value)!] as const;
-        const yDomain = data.map(({ label }) => label);
+        const xDomain = [0, d3.max(this.data, ({ value }) => value)!] as const;
+        const yDomain = this.data.map(({ label }) => label)
 
         this.xScale = d3.scaleLinear()
             .domain(xDomain)
@@ -119,6 +136,9 @@ class HorizontalBarChart
             .domain(yDomain)
             .range([0, drawConfig.height])
             .padding(0.4);
+        if(barConfig.colorScheme) {
+            this.cScale = d3.scaleOrdinal(yDomain, barConfig.colorScheme)
+        }
 
         this.xAxis = d3.axisBottom(this.xScale);
         this.yAxis = d3.axisLeft(this.yScale);
@@ -152,7 +172,16 @@ class HorizontalBarChart
             .attr("x", 0)
             .attr("height", this.yScale.bandwidth())
             .attr("width", (d) => this.xScale(d.value))
-            .attr("fill", (d) => d.color || "#000");
+            .attr("fill", (d) => d.color || this.cScale?.(d.label) || "#000");
         enableTooltip(barSel, (d) => d.tooltip);
+
+        if(!this.barConfig.plotUnknown && this.unknownData) {
+            this.ctx.select(".unknown-label").data([this.unknownData]).join("text")
+                .attr("class", "unknown-label")
+                .attr("x", this.drawConfig.width)
+                .attr("y", 0)
+                .text((d) => `Unknown: ${d.value}`);
+        }
+
     }
 }

@@ -64,15 +64,28 @@ function visualizeData(data) {
     };
     const yLabel = "# of Exoplanets";
     const starBarChart = drawAggregateBarChart(data, (d) => `${d.sy_snum}`, { xAxisLabel: "Stars In System", yAxisLabel: yLabel }, drawConfig);
-    const planetBarChart = drawAggregateBarChart(data, (d) => `${d.sy_pnum}`, { xAxisLabel: "Planets in System", yAxisLabel: yLabel }, drawConfig);
+    const planetBarChart = drawAggregateBarChart(data, (d) => `${d.sy_pnum}`, {
+        xAxisLabel: "Planets in System",
+        yAxisLabel: yLabel,
+        colorScheme: d3.schemeCategory10
+    }, drawConfig);
     const sequenceBarChart = drawSpectypeBarChart(data, { xAxisLabel: "Star Sequence", yAxisLabel: yLabel }, Object.assign(Object.assign({}, drawConfig), { className: "col-12", width: drawConfig.width * 2, margin: { left: 130, top: 50, right: 50, bottom: 50 } }));
     const discoveryYearMap = d3.rollup(data, (group) => group.length, (info) => info.disc_year);
     const discoveryYearData = [...discoveryYearMap.entries()].sort((a, b) => a[0] - b[0]);
     const discoveryYearChart = new LineChart(discoveryYearData, {
         xAxisLabel: "Year",
         xTickFormat: (d) => "'" + `${d}`.substring(2),
-        yAxisLabel: "Exoplanets Discovered"
-    }, drawConfig);
+        yAxisLabel: "Exoplanets Discovered",
+    }, Object.assign(Object.assign({}, drawConfig), { height: 200 }));
+    const discoveryTypeMap = d3.rollup(data, (group) => group.length, (info) => info.discoverymethod);
+    const discoveryTypeData = [...discoveryTypeMap.entries()]
+        .sort((a, b) => a[1] - b[1])
+        .map(([label, value]) => ({ label, value, tooltip: `${label}: ${value}` }));
+    const discoveryTypeChart = new HorizontalBarChart(discoveryTypeData, {
+        xAxisLabel: "Exoplanets Discovered",
+        yAxisLabel: "Discovery Method",
+        colorScheme: d3.schemeSet3,
+    }, Object.assign(Object.assign({}, drawConfig), { height: 200, margin: { left: 220, top: 50, right: 50, bottom: 50 } }));
     const radiusMassMap = data
         .map((d) => ({ x: d.pl_rade, y: d.pl_bmasse, tooltip: d.pl_name }))
         .filter(({ x, y }) => x !== undefined && y !== undefined);
@@ -96,7 +109,10 @@ function drawAggregateBarChart(data, keyFn, barConfig, drawConfig) {
 function drawSpectypeBarChart(data, barConfig, drawConfig) {
     const countMap = d3.rollup(data, (a) => a.length, spectypeFromPlanet);
     const countData = [...countMap.entries()].filter(([k, _]) => !!k)
-        .map(([label, value]) => (Object.assign(Object.assign({ label }, SPECTYPE_CONFIG.find((l) => l.label === label)), { value })));
+        .map(([label, value]) => {
+        const config = SPECTYPE_CONFIG.find((l) => l.label === label);
+        return Object.assign(Object.assign({ label }, config), { tooltip: (config === null || config === void 0 ? void 0 : config.tooltip) ? `${config.tooltip}<br>Matching Exoplanets: ${value}` : `Matching Exoplanets: ${value}`, value });
+    });
     const sortFn = ((a, b) => SPEC_SEQUENCE.indexOf(a) - SPEC_SEQUENCE.indexOf(b));
     countData.sort((a, b) => sortFn(a.label, b.label));
     console.log(countData);

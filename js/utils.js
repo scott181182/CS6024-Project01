@@ -1,4 +1,13 @@
 "use strict";
+class InclusiveRange {
+    constructor(lower, upper) {
+        this.lower = lower;
+        this.upper = upper;
+    }
+    contains(n) {
+        return n >= this.lower && n <= this.upper;
+    }
+}
 function createSVG(drawConfig) {
     const margin = drawConfig.margin || { top: 0, bottom: 0, left: 0, right: 0 };
     const width = drawConfig.width + margin.left + margin.right;
@@ -79,7 +88,7 @@ const SPECTYPE_CONFIG = [
 ];
 function spectypeFromPlanet(info) {
     if (!info.st_spectype) {
-        return "";
+        return "Unknown";
     }
     const MAIN_SEQ = ["O", "B", "A", "F", "G", "K", "M"];
     const spectype = info.st_spectype.toUpperCase();
@@ -97,6 +106,13 @@ function spectypeFromPlanet(info) {
     }
     return info.st_spectype;
 }
+const HABITABLE_ZONES = {
+    A: new InclusiveRange(8.5, 12.5),
+    F: new InclusiveRange(1.5, 2.2),
+    G: new InclusiveRange(0.95, 1.4),
+    K: new InclusiveRange(0.38, 0.56),
+    M: new InclusiveRange(0.08, 0.12),
+};
 const tooltipElement = d3.select("#tooltip");
 function enableTooltip(sel, ttFn) {
     sel
@@ -114,5 +130,18 @@ function enableTooltip(sel, ttFn) {
         .on("mouseout", () => {
         tooltipElement.style("visibility", "hidden");
     });
+}
+function partition(data, partitionFn) {
+    const inList = [];
+    const outList = [];
+    for (const d of data) {
+        if (partitionFn(d)) {
+            inList.push(d);
+        }
+        else {
+            outList.push(d);
+        }
+    }
+    return [inList, outList];
 }
 //# sourceMappingURL=utils.js.map
