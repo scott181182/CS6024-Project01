@@ -97,7 +97,7 @@ const SPECTYPE_CONFIG: Partial<BarData>[] = [
     },
 ]
 function spectypeFromPlanet(info: PlanetInfo) {
-    if (!info.st_spectype) { return "Unknown"; }
+    if (!info.st_spectype) { return undefined; }
 
     const MAIN_SEQ = ["O", "B", "A", "F", "G", "K", "M"];
     const spectype = info.st_spectype.toUpperCase();

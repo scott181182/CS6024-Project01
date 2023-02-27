@@ -57,11 +57,17 @@ interface DrawConfig {
     className?: string;
 }
 
-interface ChartConfig<X, Y> {
+interface Point2D {
+    x: number;
+    y: number;
+}
+
+interface ChartConfig {
+    hideUnknown?: boolean;
+}
+interface XYChartConfig<X, Y> extends ChartConfig {
     xAxisLabel: string;
     xTickFormat?: (d: X) => string;
     yAxisLabel: string;
     yTickFormat?: (d: Y) => string;
-
-    plotUnknown?: boolean;
 }

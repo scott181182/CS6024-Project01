@@ -1,45 +1,36 @@
 "use strict";
-class ScatterPlot {
-    constructor(data, scatterConfig, drawConfig) {
-        this.data = data;
-        this.scatterConfig = scatterConfig;
-        this.drawConfig = drawConfig;
-        const margin = drawConfig.margin || { top: 0, bottom: 0, left: 0, right: 0 };
-        this.svg = createSVG(drawConfig);
-        this.ctx = this.svg.append("g")
-            .attr("class", "scatter-plot")
-            .attr("transform", `translate(${margin.left}, ${margin.top})`);
-        const xDomain = d3.extent(data, ({ x }) => x);
-        const yDomain = d3.extent(data, ({ y }) => y);
-        this.xScale = scatterConfig.xScale === "log" ?
+class ScatterPlot extends AbstractXYChart {
+    constructor(chartData, scatterConfig, drawConfig) {
+        super(chartData, scatterConfig, drawConfig);
+        const xDomain = d3.extent(this.data, ({ x }) => x);
+        const yDomain = d3.extent(this.data, ({ y }) => y);
+        this.xScale = this.chartConfig.xScale === "log" ?
             d3.scaleLog(xDomain, [0, drawConfig.width]) :
             d3.scaleLinear(xDomain, [0, drawConfig.width]);
-        this.yScale = scatterConfig.xScale === "log" ?
+        this.yScale = this.chartConfig.xScale === "log" ?
             d3.scaleLog(yDomain, [drawConfig.height, 0]) :
             d3.scaleLinear(yDomain, [drawConfig.height, 0]);
         this.xAxis = d3.axisBottom(this.xScale);
         this.yAxis = d3.axisLeft(this.yScale);
-        this.ctx.append("g")
-            .call(this.xAxis)
-            .attr("transform", `translate(0, ${drawConfig.height})`);
-        this.svg.append("text")
-            .attr("class", "x-label")
-            .attr("text-anchor", "middle")
-            .attr("x", margin.left + drawConfig.width / 2)
-            .attr("y", margin.top + drawConfig.height + margin.bottom - 6)
-            .text(this.scatterConfig.xAxisLabel);
-        this.ctx.append("g")
-            .call(this.yAxis);
-        this.svg.append("text")
-            .attr("class", "y-label")
-            .attr("text-anchor", "middle")
-            .attr("x", 0 - margin.top - drawConfig.height / 2)
-            .attr("y", 50)
-            .attr("transform", "rotate(-90)")
-            .text(this.scatterConfig.yAxisLabel);
-        this.tooltip = d3.select("body").append("div")
-            .attr("class", "scatter-tooltip")
-            .style("display", "none");
+        this.renderAxes();
+        // this.ctx.append("g")
+        //     .call(this.xAxis)
+        //     .attr("transform", `translate(0, ${drawConfig.height})`);
+        // this.svg.append("text")
+        //     .attr("class", "x-label")
+        //     .attr("text-anchor", "middle")
+        //     .attr("x", this.margin.left + drawConfig.width / 2)
+        //     .attr("y", this.margin.top + drawConfig.height + this.margin.bottom - 6)
+        //     .text(this.chartConfig.xAxisLabel);
+        // this.ctx.append("g")
+        //     .call(this.yAxis);
+        // this.svg.append("text")
+        //     .attr("class", "y-label")
+        //     .attr("text-anchor", "middle")
+        //     .attr("x", 0 - this.margin.top - drawConfig.height / 2)
+        //     .attr("y", 50)
+        //     .attr("transform", "rotate(-90)")
+        //     .text(this.chartConfig.yAxisLabel);
         this.render();
     }
     render() {
@@ -51,6 +42,7 @@ class ScatterPlot {
             .attr("r", (d) => d.r || 2)
             .attr("fill", (d) => d.color || "#000");
         enableTooltip(pointSel, (d) => d.tooltip);
+        this.renderUnknown();
     }
 }
 const EARTH_MASS = 5.97; // 10^24 kg
@@ -114,8 +106,11 @@ const SOL_PLANETS = [
     },
 ];
 class PlanetScatterPlot extends ScatterPlot {
-    constructor(data, scatterConfig, drawConfig) {
-        super([...data, ...SOL_PLANETS], scatterConfig, drawConfig);
+    constructor(chartData, scatterConfig, drawConfig) {
+        super({
+            data: [...chartData.data, ...SOL_PLANETS],
+            unknownCount: chartData.unknownCount
+        }, scatterConfig, drawConfig);
     }
 }
 //# sourceMappingURL=ScatterPlot.js.map

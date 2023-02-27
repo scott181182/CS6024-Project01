@@ -88,7 +88,7 @@ const SPECTYPE_CONFIG = [
 ];
 function spectypeFromPlanet(info) {
     if (!info.st_spectype) {
-        return "Unknown";
+        return undefined;
     }
     const MAIN_SEQ = ["O", "B", "A", "F", "G", "K", "M"];
     const spectype = info.st_spectype.toUpperCase();

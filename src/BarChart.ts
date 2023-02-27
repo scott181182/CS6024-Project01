@@ -1,9 +1,16 @@
 
 
 
-interface BarConfig extends ChartConfig<string, number> {
+interface BarConfig extends XYChartConfig<string, number> {
     labelOrder?: string[];
     labelSort?: (a: string, b: string) => number;
+    sort?: (a: BarData, b: BarData) => number;
+    colorScheme?: readonly string[]
+}
+interface HorizontalBarConfig extends XYChartConfig<number, string> {
+    labelOrder?: string[];
+    labelSort?: (a: string, b: string) => number;
+    sort?: (a: BarData, b: BarData) => number;
     colorScheme?: readonly string[]
 }
 
@@ -14,33 +21,26 @@ interface BarData {
     color?: string;
 }
 
-class BarChart
+class BarChart extends AbstractXYChart<BarData, "label", "value", BarConfig>
 {
-    private svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>;
-    private ctx: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+    protected xScale: d3.ScaleBand<string>;
+    protected yScale: d3.ScaleLinear<number, number, never>;
+    protected xAxis: d3.Axis<string>;
+    protected yAxis: d3.Axis<number>;
 
-    private xScale: d3.ScaleBand<string>;
-    private yScale: d3.ScaleLinear<number, number, never>;
-    private xAxis: d3.Axis<string>;
-    private yAxis: d3.Axis<d3.NumberValue>;
-
-    private cScale?: d3.ScaleOrdinal<string, string>;
+    protected cScale?: d3.ScaleOrdinal<string, string>;
 
 
 
     public constructor(
-        private data: BarData[],
-        private barConfig: BarConfig,
-        private drawConfig: DrawConfig,
+        chartData: ChartData<BarData>,
+        barConfig: BarConfig,
+        drawConfig: DrawConfig,
     ) {
-        const margin = drawConfig.margin || { top: 0, bottom: 0, left: 0, right: 0 };
-        this.svg = createSVG(drawConfig);
-        this.ctx = this.svg.append("g")
-            .attr("class", "bar-chart")
-            .attr("transform", `translate(${margin.left}, ${margin.top})`);
+        super(chartData, barConfig, drawConfig);
 
-        const xDomain = data.map(({ label }) => label);
-        const yDomain = [0, d3.max(data, ({ value }) => value)!] as const;
+        const xDomain = this.data.map(({ label }) => label);
+        const yDomain = [0, d3.max(this.data, ({ value }) => value)!] as const;
 
         this.xScale = d3.scaleBand()
             .domain(xDomain)
@@ -49,35 +49,25 @@ class BarChart
         this.yScale = d3.scaleLinear()
             .domain(yDomain)
             .range([drawConfig.height, 0]);
-        if(barConfig.colorScheme) {
-            this.cScale = d3.scaleOrdinal(xDomain, barConfig.colorScheme)
+        if(this.chartConfig.colorScheme) {
+            this.cScale = d3.scaleOrdinal(xDomain, this.chartConfig.colorScheme)
         }
 
         this.xAxis = d3.axisBottom(this.xScale);
-        this.yAxis = d3.axisLeft(this.yScale);
+        this.yAxis = d3.axisLeft<number>(this.yScale);
 
-        this.ctx.append("g")
-            .call(this.xAxis)
-                .attr("transform", `translate(0, ${drawConfig.height})`)
-            .selectAll(".tick text")
-                .call(wrapAxisText, this.xScale.bandwidth());
-        this.svg.append("text")
-            .attr("class", "x-label")
-            .attr("text-anchor", "middle")
-            .attr("x", margin.left + drawConfig.width / 2)
-            .attr("y", margin.top + drawConfig.height + margin.bottom - 6)
-            .text(this.barConfig.xAxisLabel);
-        this.ctx.append("g")
-            .call(this.yAxis);
-        this.svg.append("text")
-            .attr("class", "y-label")
-            .attr("text-anchor", "middle")
-            .attr("x", 0 - margin.top - drawConfig.height / 2)
-            .attr("y", 50)
-            .attr("transform", "rotate(-90)")
-            .text(this.barConfig.yAxisLabel);
-
+        this.renderAxes(this.xScale.bandwidth());
         this.render();
+    }
+
+    protected setData(chartData: ChartData<BarData>): void {
+        super.setData(chartData);
+
+        const sortFn = this.chartConfig.sort ||
+            (this.chartConfig.labelSort ? (a: BarData, b: BarData) => this.chartConfig.labelSort!(a.label, b.label) :
+            (this.chartConfig.labelOrder ? ((a: BarData, b: BarData) => this.chartConfig.labelOrder!.indexOf(a.label) - this.chartConfig.labelOrder!.indexOf(b.label)) :
+                (a: BarData, b: BarData) => a.label.localeCompare(b.label)));
+        this.data.sort(sortFn);
     }
 
     public render() {
@@ -93,38 +83,23 @@ class BarChart
 }
 
 
-class HorizontalBarChart
+class HorizontalBarChart extends AbstractXYChart<BarData, "value", "label", HorizontalBarConfig>
 {
-    private svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>;
-    private ctx: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
+    protected xScale: d3.ScaleLinear<number, number, never>;
+    protected yScale: d3.ScaleBand<string>;
+    protected xAxis: d3.Axis<number>;
+    protected yAxis: d3.Axis<string>;
 
-    private xScale: d3.ScaleLinear<number, number, never>;
-    private yScale: d3.ScaleBand<string>;
-    private xAxis: d3.Axis<d3.NumberValue>;
-    private yAxis: d3.Axis<string>;
-
-    private cScale?: d3.ScaleOrdinal<string, string>;
-
-    private unknownData?: BarData;
+    protected cScale?: d3.ScaleOrdinal<string, string>;
 
 
 
     public constructor(
-        private data: BarData[],
-        private barConfig: BarConfig,
-        private drawConfig: DrawConfig,
+        chartData: ChartData<BarData>,
+        barConfig: HorizontalBarConfig,
+        drawConfig: DrawConfig,
     ) {
-        if(!barConfig.plotUnknown) {
-            const [ tUnknown, tData ] = partition(data, (d) => d.label === "Unknown");
-            this.unknownData = tUnknown[0];
-            this.data = tData;
-        }
-
-        const margin = drawConfig.margin || { top: 0, bottom: 0, left: 0, right: 0 };
-        this.svg = createSVG(drawConfig);
-        this.ctx = this.svg.append("g")
-            .attr("class", "bar-chart")
-            .attr("transform", `translate(${margin.left}, ${margin.top})`);
+        super(chartData, barConfig, drawConfig);
 
         const xDomain = [0, d3.max(this.data, ({ value }) => value)!] as const;
         const yDomain = this.data.map(({ label }) => label)
@@ -136,33 +111,44 @@ class HorizontalBarChart
             .domain(yDomain)
             .range([0, drawConfig.height])
             .padding(0.4);
-        if(barConfig.colorScheme) {
-            this.cScale = d3.scaleOrdinal(yDomain, barConfig.colorScheme)
+        if(this.chartConfig.colorScheme) {
+            this.cScale = d3.scaleOrdinal(yDomain, this.chartConfig.colorScheme)
         }
 
-        this.xAxis = d3.axisBottom(this.xScale);
+        this.xAxis = d3.axisBottom<number>(this.xScale);
         this.yAxis = d3.axisLeft(this.yScale);
 
-        this.ctx.append("g")
-            .call(this.xAxis)
-                .attr("transform", `translate(0, ${drawConfig.height})`)
-        this.svg.append("text")
-            .attr("class", "x-label")
-            .attr("text-anchor", "middle")
-            .attr("x", margin.left + drawConfig.width / 2)
-            .attr("y", margin.top + drawConfig.height + margin.bottom - 6)
-            .text(this.barConfig.xAxisLabel);
-        this.ctx.append("g")
-            .call(this.yAxis)
-        this.svg.append("text")
-            .attr("class", "y-label")
-            .attr("text-anchor", "middle")
-            .attr("x", 0 - margin.top - drawConfig.height / 2)
-            .attr("y", 50)
-            .attr("transform", "rotate(-90)")
-            .text(this.barConfig.yAxisLabel);
+        this.renderAxes();
+        // this.ctx.append("g")
+        //     .call(this.xAxis)
+        //         .attr("transform", `translate(0, ${drawConfig.height})`)
+        // this.svg.append("text")
+        //     .attr("class", "x-label")
+        //     .attr("text-anchor", "middle")
+        //     .attr("x", this.margin.left + drawConfig.width / 2)
+        //     .attr("y", this.margin.top + drawConfig.height + this.margin.bottom - 6)
+        //     .text(this.chartConfig.xAxisLabel);
+        // this.ctx.append("g")
+        //     .call(this.yAxis)
+        // this.svg.append("text")
+        //     .attr("class", "y-label")
+        //     .attr("text-anchor", "middle")
+        //     .attr("x", 0 - this.margin.top - drawConfig.height / 2)
+        //     .attr("y", 50)
+        //     .attr("transform", "rotate(-90)")
+        //     .text(this.chartConfig.yAxisLabel);
 
         this.render();
+    }
+
+    protected setData(chartData: ChartData<BarData>): void {
+        super.setData(chartData);
+
+        const sortFn = this.chartConfig.sort ||
+            (this.chartConfig.labelSort ? (a: BarData, b: BarData) => this.chartConfig.labelSort!(a.label, b.label) :
+            (this.chartConfig.labelOrder ? ((a: BarData, b: BarData) => this.chartConfig.labelOrder!.indexOf(a.label) - this.chartConfig.labelOrder!.indexOf(b.label)) :
+                (a: BarData, b: BarData) => a.label.localeCompare(b.label)));
+        this.data.sort(sortFn);
     }
 
     public render() {
@@ -175,13 +161,6 @@ class HorizontalBarChart
             .attr("fill", (d) => d.color || this.cScale?.(d.label) || "#000");
         enableTooltip(barSel, (d) => d.tooltip);
 
-        if(!this.barConfig.plotUnknown && this.unknownData) {
-            this.ctx.select(".unknown-label").data([this.unknownData]).join("text")
-                .attr("class", "unknown-label")
-                .attr("x", this.drawConfig.width)
-                .attr("y", 0)
-                .text((d) => `Unknown: ${d.value}`);
-        }
-
+        this.renderUnknown();
     }
 }

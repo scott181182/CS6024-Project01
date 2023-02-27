@@ -1,79 +1,65 @@
 
 
 
-interface ScatterConfig extends ChartConfig<number, number> {
+interface ScatterConfig extends XYChartConfig<number, number> {
     xScale?: "linear" | "log";
     yScale?: "linear" | "log";
 }
 
-interface ScatterData {
-    x: number;
-    y: number;
+interface ScatterData extends Point2D {
     r?: number;
     color?: string;
     tooltip?: string;
 }
 
-class ScatterPlot
+class ScatterPlot extends AbstractXYChart<ScatterData, "x", "y", ScatterConfig>
 {
-    protected svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, any>;
-    protected ctx: d3.Selection<SVGGElement, unknown, HTMLElement, any>;
-
     protected xScale: d3.ScaleContinuousNumeric<number, number, never>;
     protected yScale: d3.ScaleContinuousNumeric<number, number, never>;
-    protected xAxis: d3.Axis<d3.NumberValue>;
-    protected yAxis: d3.Axis<d3.NumberValue>;
-
-    protected tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, any>;
+    protected xAxis: d3.Axis<number>;
+    protected yAxis: d3.Axis<number>;
 
 
 
     public constructor(
-        protected data: ScatterData[],
-        protected scatterConfig: ScatterConfig,
-        protected drawConfig: DrawConfig,
+        chartData: ChartData<ScatterData>,
+        scatterConfig: ScatterConfig,
+        drawConfig: DrawConfig,
     ) {
-        const margin = drawConfig.margin || { top: 0, bottom: 0, left: 0, right: 0 };
-        this.svg = createSVG(drawConfig);
-        this.ctx = this.svg.append("g")
-            .attr("class", "scatter-plot")
-            .attr("transform", `translate(${margin.left}, ${margin.top})`);
+        super(chartData, scatterConfig, drawConfig);
 
-        const xDomain = d3.extent(data, ({ x }) => x) as  [number, number];
-        const yDomain = d3.extent(data, ({ y }) => y) as  [number, number];
+        const xDomain = d3.extent(this.data, ({ x }) => x) as  [number, number];
+        const yDomain = d3.extent(this.data, ({ y }) => y) as  [number, number];
 
-        this.xScale = scatterConfig.xScale === "log" ?
+        this.xScale = this.chartConfig.xScale === "log" ?
             d3.scaleLog(xDomain, [0, drawConfig.width]) :
             d3.scaleLinear(xDomain, [0, drawConfig.width]);
-        this.yScale = scatterConfig.xScale === "log" ?
+        this.yScale = this.chartConfig.xScale === "log" ?
             d3.scaleLog(yDomain, [drawConfig.height, 0]) :
             d3.scaleLinear(yDomain, [drawConfig.height, 0]);
 
-        this.xAxis = d3.axisBottom(this.xScale);
-        this.yAxis = d3.axisLeft(this.yScale);
+        this.xAxis = d3.axisBottom<number>(this.xScale);
+        this.yAxis = d3.axisLeft<number>(this.yScale);
 
-        this.ctx.append("g")
-            .call(this.xAxis)
-            .attr("transform", `translate(0, ${drawConfig.height})`);
-        this.svg.append("text")
-            .attr("class", "x-label")
-            .attr("text-anchor", "middle")
-            .attr("x", margin.left + drawConfig.width / 2)
-            .attr("y", margin.top + drawConfig.height + margin.bottom - 6)
-            .text(this.scatterConfig.xAxisLabel);
-        this.ctx.append("g")
-            .call(this.yAxis);
-        this.svg.append("text")
-            .attr("class", "y-label")
-            .attr("text-anchor", "middle")
-            .attr("x", 0 - margin.top - drawConfig.height / 2)
-            .attr("y", 50)
-            .attr("transform", "rotate(-90)")
-            .text(this.scatterConfig.yAxisLabel);
-
-        this.tooltip = d3.select("body").append("div")
-            .attr("class", "scatter-tooltip")
-            .style("display", "none");
+        this.renderAxes();
+        // this.ctx.append("g")
+        //     .call(this.xAxis)
+        //     .attr("transform", `translate(0, ${drawConfig.height})`);
+        // this.svg.append("text")
+        //     .attr("class", "x-label")
+        //     .attr("text-anchor", "middle")
+        //     .attr("x", this.margin.left + drawConfig.width / 2)
+        //     .attr("y", this.margin.top + drawConfig.height + this.margin.bottom - 6)
+        //     .text(this.chartConfig.xAxisLabel);
+        // this.ctx.append("g")
+        //     .call(this.yAxis);
+        // this.svg.append("text")
+        //     .attr("class", "y-label")
+        //     .attr("text-anchor", "middle")
+        //     .attr("x", 0 - this.margin.top - drawConfig.height / 2)
+        //     .attr("y", 50)
+        //     .attr("transform", "rotate(-90)")
+        //     .text(this.chartConfig.yAxisLabel);
 
         this.render();
     }
@@ -88,6 +74,7 @@ class ScatterPlot
                 .attr("fill", (d) => d.color || "#000");
 
         enableTooltip(pointSel, (d) => d.tooltip);
+        this.renderUnknown();
     }
 }
 
@@ -156,10 +143,13 @@ const SOL_PLANETS: ScatterData[] = [
 class PlanetScatterPlot extends ScatterPlot
 {
     public constructor(
-        data: ScatterData[],
+        chartData: ChartData<ScatterData>,
         scatterConfig: ScatterConfig,
         drawConfig: DrawConfig,
     ) {
-        super([ ...data, ...SOL_PLANETS ], scatterConfig, drawConfig);
+        super({
+            data: [ ...chartData.data, ...SOL_PLANETS ],
+            unknownCount: chartData.unknownCount
+        }, scatterConfig, drawConfig);
     }
 }
