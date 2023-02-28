@@ -7,7 +7,7 @@ interface PieConfig extends ChartConfig {
 }
 interface PieData {
     value: number;
-    tooltip: string;
+    label: string;
     color?: string;
 }
 
@@ -47,7 +47,7 @@ class PieChart<T> extends AbstractChart<T, PieData, PieConfig>
         this.thetaScale = d3.scaleLinear([0, this.total], [0, 2 * Math.PI]);
 
         if(this.chartConfig.colorScheme) {
-            const cDomain = this.data.map((d) => d.tooltip).filter((d) => d) as string[];
+            const cDomain = this.data.map((d) => d.label).filter((d) => d) as string[];
             console.log(cDomain);
             this.cScale = d3.scaleOrdinal(cDomain, this.chartConfig.colorScheme);
             console.log(this.cScale);
@@ -68,7 +68,7 @@ class PieChart<T> extends AbstractChart<T, PieData, PieConfig>
             .attr("transform", (d) => `translate(5, ${this.data.indexOf(d) * 20})`);
 
         entries.append("rect")
-            .attr("fill", (d) => d.color || this.cScale?.(d.tooltip) || "#000")
+            .attr("fill", (d) => d.color || this.cScale?.(d.label) || "#000")
             .attr("class", "data-element")
             .attr("x", 0)
             .attr("y", 0)
@@ -78,7 +78,7 @@ class PieChart<T> extends AbstractChart<T, PieData, PieConfig>
             .attr("x", 25)
             .attr("y", 12)
             .attr("font-size", 10)
-            .text((d) => d.tooltip)
+            .text((d) => `${d.label}: ${d.value}`)
     }
 
     public render() {
@@ -86,8 +86,8 @@ class PieChart<T> extends AbstractChart<T, PieData, PieConfig>
         const sliceSel = this.ctx.selectAll(".pie-slice").data(this.data).join("path")
             .attr("class", "pie-slice data-element")
             .attr("d", (d) => this.slice2path(d, this.sliceArcCounter))
-            .attr("fill", (d) => d.color || this.cScale?.(d.tooltip) || "#000");
-        enableTooltip(sliceSel, (d) => d.tooltip);
+            .attr("fill", (d) => d.color || this.cScale?.(d.label) || "#000");
+        enableTooltip(sliceSel, (d) => `${d.label}: ${d.value}`);
 
         if(this.chartConfig.legend) { this.renderLegend(); }
         this.renderUnknown();

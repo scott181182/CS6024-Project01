@@ -4,7 +4,7 @@ interface PieConfig extends ChartConfig {
 }
 interface PieData {
     value: number;
-    tooltip: string;
+    label: string;
     color?: string;
 }
 declare class PieChart<T> extends AbstractChart<T, PieData, PieConfig> {

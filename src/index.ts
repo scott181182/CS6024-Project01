@@ -76,7 +76,21 @@ function visualizeData(data: PlanetInfo[]) {
         height: 150,
         margin
     };
-    const yLabel = "# of Exoplanets"
+    const yLabel = "# of Exoplanets";
+
+    /** Array of all chart objects, to reference later. */
+    const allCharts: AbstractChart<PlanetInfo, unknown, ChartConfig>[] = [];
+
+    const onDataRangeUpdate = (newData: PlanetInfo[]) => {
+        for(const chart of allCharts) {
+            chart.setData(newData);
+            chart.render();
+        }
+    }
+
+
+
+
 
     const starBarChart = new BarChart(
         data,
@@ -88,6 +102,8 @@ function visualizeData(data: PlanetInfo[]) {
         },
         drawConfig
     );
+    allCharts.push(starBarChart);
+
     const planetBarChart = new BarChart(
         data,
         binMapper(
@@ -101,6 +117,7 @@ function visualizeData(data: PlanetInfo[]) {
         },
         drawConfig
     );
+    allCharts.push(planetBarChart);
 
     const sequenceBarChart = new HorizontalBarChart(
         data,
@@ -123,6 +140,7 @@ function visualizeData(data: PlanetInfo[]) {
             margin: { left: 130, top: 50, right: 50, bottom: 50 },
         }
     );
+    allCharts.push(sequenceBarChart);
 
     const discoveryYearChart = new LineChart(
         data,
@@ -139,11 +157,8 @@ function visualizeData(data: PlanetInfo[]) {
             height: 200,
         }
     );
+    allCharts.push(discoveryYearChart);
 
-    // const discoveryTypeMap = d3.rollup(data, (group) => group.length, (info) => info.discoverymethod);
-    // const discoveryTypeData = [ ...discoveryTypeMap.entries() ]
-    //     .sort((a, b) => a[1] - b[1])
-    //     .map(([ x, y ]) => ({ x, y, tooltip: `${x}: ${y}` }));
     const discoveryTypeChart = new HorizontalBarChart(
         data,
         binMapper(
@@ -161,6 +176,7 @@ function visualizeData(data: PlanetInfo[]) {
             margin: { left: 220, top: 50, right: 50, bottom: 50 }
         }
     );
+    allCharts.push(discoveryTypeChart);
 
     const habitableChart = new PieChart(
         data,
@@ -177,10 +193,7 @@ function visualizeData(data: PlanetInfo[]) {
                 }
                 return undefined;
             },
-            (label, value) => ({
-                value,
-                tooltip: `${label}: ${value}`
-            })
+            (label, value) => ({ value, label })
         ),
         {
             title: "Exoplanets in the Habitable Zone",
@@ -193,6 +206,7 @@ function visualizeData(data: PlanetInfo[]) {
             margin: { left: 0, top: 40, right: 50, bottom: 0 }
         }
     )
+    allCharts.push(habitableChart);
 
     const distanceChart = new HistogramChart(
         data,
@@ -205,6 +219,7 @@ function visualizeData(data: PlanetInfo[]) {
         },
         drawConfig
     )
+    allCharts.push(distanceChart);
 
 
 
@@ -224,17 +239,7 @@ function visualizeData(data: PlanetInfo[]) {
             className: "col-12"
         }
     );
-
-    const allCharts: AbstractChart<PlanetInfo, unknown, ChartConfig>[] = [
-        starBarChart,
-        planetBarChart,
-        sequenceBarChart,
-        discoveryYearChart,
-        discoveryTypeChart,
-        habitableChart,
-        distanceChart,
-        scatter,
-    ];
+    allCharts.push(scatter);
 }
 
 
