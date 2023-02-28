@@ -1,7 +1,7 @@
 
 
 
-interface ScatterConfig extends XYChartConfig<number, number> {
+interface ScatterConfig extends XYChartConfig<ScatterData, number, number> {
     xScale?: "linear" | "log";
     yScale?: "linear" | "log";
 }

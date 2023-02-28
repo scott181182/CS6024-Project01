@@ -79,9 +79,18 @@ function visualizeData(data: PlanetInfo[]) {
     const yLabel = "# of Exoplanets";
 
     /** Array of all chart objects, to reference later. */
-    const allCharts: AbstractChart<PlanetInfo, unknown, ChartConfig>[] = [];
+    const allCharts: AbstractChart<PlanetInfo, unknown, ChartConfig<any>>[] = [];
 
+    let filtered = false;
+    // Add general click listener to un-filter the data range if it's filtered.
+    document.addEventListener("click", () => {
+        if(filtered) {
+            onDataRangeUpdate(data);
+            filtered = false;
+        }
+    })
     const onDataRangeUpdate = (newData: PlanetInfo[]) => {
+        filtered = true;
         for(const chart of allCharts) {
             chart.setData(newData);
             chart.render();
@@ -94,11 +103,14 @@ function visualizeData(data: PlanetInfo[]) {
 
     const starBarChart = new BarChart(
         data,
-        binMapper((info) => `${info.sy_snum}`, (label, value) => ({ label, value })),
+        aggregateMapper((info) => `${info.sy_snum}`, (label, value) => ({ label, value })),
         {
             title: "Stars in an Exoplanet's System",
             xAxisLabel: "Stars In System",
-            yAxisLabel: yLabel
+            yAxisLabel: yLabel,
+            onDataSelect(selected) {
+                onDataRangeUpdate(data.filter((d) => d.sy_snum === parseInt(selected.label)))
+            },
         },
         drawConfig
     );
@@ -106,7 +118,7 @@ function visualizeData(data: PlanetInfo[]) {
 
     const planetBarChart = new BarChart(
         data,
-        binMapper(
+        aggregateMapper(
             (info) => `${info.sy_pnum}`,
             (label, value) => ({ label, value })
         ), {
@@ -114,6 +126,9 @@ function visualizeData(data: PlanetInfo[]) {
             xAxisLabel: "Planets in System",
             yAxisLabel: yLabel,
             colorScheme: d3.schemeCategory10,
+            onDataSelect(selected) {
+                onDataRangeUpdate(data.filter((d) => d.sy_pnum === parseInt(selected.label)))
+            },
         },
         drawConfig
     );
@@ -121,7 +136,7 @@ function visualizeData(data: PlanetInfo[]) {
 
     const sequenceBarChart = new HorizontalBarChart(
         data,
-        binMapper(spectypeFromPlanet, (label, value) => {
+        aggregateMapper(spectypeFromPlanet, (label, value) => {
             const config = SPECTYPE_CONFIG.find((l) => l.label === label)!;
             return {
                 label, value,
@@ -132,7 +147,10 @@ function visualizeData(data: PlanetInfo[]) {
             title: "Stellar Classification of Exoplanet Host Stars",
             xAxisLabel: "Star Sequence",
             yAxisLabel: yLabel,
-            labelSort: (a, b) => SPEC_SEQUENCE.indexOf(a) - SPEC_SEQUENCE.indexOf(b)
+            labelSort: (a, b) => SPEC_SEQUENCE.indexOf(a) - SPEC_SEQUENCE.indexOf(b),
+            onDataSelect(selected) {
+                onDataRangeUpdate(data.filter((d) => spectypeFromPlanet(d) === selected.label))
+            },
         }, {
             ...drawConfig,
             className: "col-12",
@@ -144,7 +162,7 @@ function visualizeData(data: PlanetInfo[]) {
 
     const discoveryYearChart = new LineChart(
         data,
-        binMapper(
+        aggregateMapper(
             (info) => `${info.disc_year}`,
             (x, y) => ({ x: parseInt(x), y })
         ), {
@@ -161,8 +179,8 @@ function visualizeData(data: PlanetInfo[]) {
 
     const discoveryTypeChart = new HorizontalBarChart(
         data,
-        binMapper(
-            (info) => `${info.discoverymethod}`,
+        aggregateMapper(
+            (info) => info.discoverymethod,
             (label, value) => ({ label, value, tooltip: `${label}: ${value}` })
         ), {
             title: "Exoplanets Discovered per <a href=\"https://en.wikipedia.org/wiki/Methods_of_detecting_exoplanets\">Discovery Method</a>",
@@ -170,6 +188,9 @@ function visualizeData(data: PlanetInfo[]) {
             yAxisLabel: "Discovery Method",
             colorScheme: d3.schemeSet3,
             sort: (a, b) => b.value - a.value,
+            onDataSelect(selected) {
+                onDataRangeUpdate(data.filter((d) => d.discoverymethod === selected.label))
+            },
         }, {
             ...drawConfig,
             height: 200,
@@ -178,27 +199,31 @@ function visualizeData(data: PlanetInfo[]) {
     );
     allCharts.push(discoveryTypeChart);
 
+    const getPlanetHabitableZoneRelation = (info: PlanetInfo) => {
+        if(info.pl_orbsmax === undefined) { return undefined; }
+        const spectype = spectypeFromPlanet(info);
+        if(!spectype) { return undefined; }
+        if(spectype in HABITABLE_ZONES) {
+            const zone = HABITABLE_ZONES[spectype as keyof typeof HABITABLE_ZONES];
+            if(info.pl_orbsmax < zone.lower) { return "Too Close to Sun"; }
+            if(info.pl_orbsmax > zone.upper) { return "Too Far Away from Sun"; }
+            return "Habitable Zone";
+        }
+        return undefined;
+    };
     const habitableChart = new PieChart(
         data,
-        binMapper(
-            (info) => {
-                if(info.pl_orbsmax === undefined) { return undefined; }
-                const spectype = spectypeFromPlanet(info);
-                if(!spectype) { return undefined; }
-                if(spectype in HABITABLE_ZONES) {
-                    const zone = HABITABLE_ZONES[spectype as keyof typeof HABITABLE_ZONES];
-                    if(info.pl_orbsmax < zone.lower) { return "Too Close to Sun"; }
-                    if(info.pl_orbsmax > zone.upper) { return "Too Far Away from Sun"; }
-                    return "Habitable Zone";
-                }
-                return undefined;
-            },
+        aggregateMapper(
+            getPlanetHabitableZoneRelation,
             (label, value) => ({ value, label })
         ),
         {
             title: "Exoplanets in the Habitable Zone",
             colorScheme: d3.schemeCategory10,
-            legend: true
+            legend: true,
+            onDataSelect(selected) {
+                onDataRangeUpdate(data.filter((d) => getPlanetHabitableZoneRelation(d) === selected.label))
+            },
         },
         {
             ...drawConfig,
@@ -210,12 +235,15 @@ function visualizeData(data: PlanetInfo[]) {
 
     const distanceChart = new HistogramChart(
         data,
-        elementMapper((d) => d.sy_dist),
+        binMapper((d) => d.sy_dist),
         {
             title: "Exoplanet Distance",
             color: "#fa8",
             xAxisLabel: "Distance from Earth (parsecs)",
             yAxisLabel: "Number of Exoplanets",
+            onDataSelect(selected) {
+                onDataRangeUpdate(data.filter((d) => d.sy_dist && d.sy_dist >= selected.x0! && d.sy_dist <= selected.x1!))
+            },
         },
         drawConfig
     )
@@ -233,6 +261,7 @@ function visualizeData(data: PlanetInfo[]) {
             xScale: "log",
         },
         {
+            ...drawConfig,
             width: 900,
             height: 300,
             parent: "#big-row",

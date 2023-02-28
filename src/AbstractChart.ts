@@ -1,11 +1,12 @@
 
 
-interface ChartConfig {
+interface ChartConfig<D> {
     hideUnknown?: boolean;
     title?: string;
+    onDataSelect?: (data: D) => void;
 }
 
-abstract class AbstractChart<T, D, Config extends ChartConfig>
+abstract class AbstractChart<T, D, Config extends ChartConfig<D>>
 {
     protected data: D[] = [];
 
@@ -65,7 +66,7 @@ abstract class AbstractChart<T, D, Config extends ChartConfig>
 
 
 
-interface XYChartConfig<X, Y> extends ChartConfig {
+interface XYChartConfig<D, X, Y> extends ChartConfig<D> {
     xAxisLabel: string;
     xTickFormat?: (d: X) => string;
     yAxisLabel: string;
@@ -76,13 +77,16 @@ abstract class AbstractXYChart<
     T, D,
     XKey extends keyof D,
     YKey extends keyof D,
-    Config extends XYChartConfig<D[XKey], D[YKey]>
+    Config extends XYChartConfig<D, D[XKey], D[YKey]>
 > extends AbstractChart<T, D, Config> {
     protected abstract xAxis: d3.Axis<D[XKey]>;
     protected abstract yAxis: d3.Axis<D[YKey]>;
 
     protected renderAxes(xWrapWidth?: number) {
+        this.svg.selectAll(".x-axis,.x-label,.y-axis,.y-label").remove();
+
         const xAxisSel = this.ctx.append("g")
+            .attr("class", "x-axis")
             .call(this.xAxis)
                 .attr("transform", `translate(0, ${this.drawConfig.height})`);
         if(xWrapWidth !== undefined) {
@@ -96,6 +100,7 @@ abstract class AbstractXYChart<
             .attr("y", this.margin.top + this.drawConfig.height + this.margin.bottom - 6)
             .text(this.chartConfig.xAxisLabel);
         this.ctx.append("g")
+            .attr("class", "y-axis")
             .call(this.yAxis);
         this.svg.append("text")
             .attr("class", "y-label")
@@ -129,7 +134,7 @@ function elementMapper<T, D>(mapFn: (d: T) => D | undefined): DataMapperFn<T, D>
         return { data, unknownCount };
     }
 }
-function binMapper<T, D>(bucketFn: (d: T) => string | undefined, mapFn: (bucket: string, count: number) => D): DataMapperFn<T, D> {
+function aggregateMapper<T, D>(bucketFn: (d: T) => string | undefined, mapFn: (bucket: string, count: number) => D): DataMapperFn<T, D> {
     return (sourceData) => {
         const dict: Record<string, number> = {};
         let unknownCount = 0;
@@ -144,6 +149,30 @@ function binMapper<T, D>(bucketFn: (d: T) => string | undefined, mapFn: (bucket:
 
         }
         const data = Object.entries(dict).map(([bucket, count]) => mapFn(bucket, count));
+        return { data, unknownCount };
+    }
+}
+function binMapper<T>(
+    mapFn: (d: T) => number | undefined,
+    binConfig?: {
+        bins?: number
+    }
+): DataMapperFn<T, d3.Bin<number, number>> {
+    let bin = d3.bin();
+    if(binConfig?.bins) {
+        bin = bin.thresholds(binConfig.bins);
+    }
+
+    return (sourceData) => {
+        const mapData: number[] = [];
+        let unknownCount = 0;
+        for(const t of sourceData) {
+            const d = mapFn(t);
+            if(d !== undefined) { mapData.push(d); }
+            else { unknownCount++; }
+        }
+
+        const data = bin(mapData);
         return { data, unknownCount };
     }
 }

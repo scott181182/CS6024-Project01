@@ -1,15 +1,15 @@
 "use strict";
 class LineChart extends AbstractXYChart {
-    constructor(rawData, dataMapper, lineConfig, drawConfig) {
-        super(rawData, dataMapper, lineConfig, drawConfig);
+    setData(sourceData) {
+        super.setData(sourceData);
         const xDomain = d3.extent(this.data, ({ x }) => x);
         const yDomain = d3.extent(this.data, ({ y }) => y);
-        this.xScale = lineConfig.xScale === "log" ?
-            d3.scaleLog(xDomain, [0, drawConfig.width]) :
-            d3.scaleLinear(xDomain, [0, drawConfig.width]);
-        this.yScale = lineConfig.xScale === "log" ?
-            d3.scaleLog(yDomain, [drawConfig.height, 0]) :
-            d3.scaleLinear(yDomain, [drawConfig.height, 0]);
+        this.xScale = this.chartConfig.xScale === "log" ?
+            d3.scaleLog(xDomain, [0, this.drawConfig.width]) :
+            d3.scaleLinear(xDomain, [0, this.drawConfig.width]);
+        this.yScale = this.chartConfig.xScale === "log" ?
+            d3.scaleLog(yDomain, [this.drawConfig.height, 0]) :
+            d3.scaleLinear(yDomain, [this.drawConfig.height, 0]);
         this.xAxis = d3.axisBottom(this.xScale);
         if (this.chartConfig.xTickFormat) {
             this.xAxis.tickFormat(this.chartConfig.xTickFormat);
@@ -19,6 +19,9 @@ class LineChart extends AbstractXYChart {
             this.yAxis.tickFormat(this.chartConfig.yTickFormat);
         }
         this.renderAxes();
+    }
+    constructor(rawData, dataMapper, lineConfig, drawConfig) {
+        super(rawData, dataMapper, lineConfig, drawConfig);
         this.ctx.append("polyline")
             .attr("class", "line-plot-line");
         this.render();

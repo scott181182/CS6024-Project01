@@ -3,6 +3,11 @@ class PieChart extends AbstractChart {
     setData(sourceData) {
         super.setData(sourceData);
         this.total = this.data.reduce((acc, val) => acc + val.value, 0);
+        this.thetaScale = d3.scaleLinear([0, this.total], [0, 2 * Math.PI]);
+        if (this.chartConfig.colorScheme) {
+            const cDomain = this.data.map((d) => d.label).filter((d) => d);
+            this.cScale = d3.scaleOrdinal(cDomain, this.chartConfig.colorScheme);
+        }
     }
     constructor(rawData, dataMapper, pieConfig, drawConfig) {
         super(rawData, dataMapper, pieConfig, drawConfig);
@@ -10,14 +15,6 @@ class PieChart extends AbstractChart {
         this.cx = this.drawConfig.width / 2;
         this.cy = this.drawConfig.height / 2;
         this.radius = Math.min(this.cx, this.cy);
-        this.total = this.data.reduce((acc, val) => acc + val.value, 0);
-        this.thetaScale = d3.scaleLinear([0, this.total], [0, 2 * Math.PI]);
-        if (this.chartConfig.colorScheme) {
-            const cDomain = this.data.map((d) => d.label).filter((d) => d);
-            console.log(cDomain);
-            this.cScale = d3.scaleOrdinal(cDomain, this.chartConfig.colorScheme);
-            console.log(this.cScale);
-        }
         if (this.chartConfig.legend) {
             this.legend = this.ctx.append("g")
                 .attr("class", "legend")
@@ -29,7 +26,9 @@ class PieChart extends AbstractChart {
         if (!this.legend) {
             return;
         }
+        this.legend.selectAll(".legend-entry").remove();
         const entries = this.legend.selectAll(".legend-entry").data(this.data).join("g")
+            .attr("class", "legend-entry")
             .attr("transform", (d) => `translate(5, ${this.data.indexOf(d) * 20})`);
         entries.append("rect")
             .attr("fill", (d) => { var _a; return d.color || ((_a = this.cScale) === null || _a === void 0 ? void 0 : _a.call(this, d.label)) || "#000"; })
@@ -46,10 +45,32 @@ class PieChart extends AbstractChart {
     }
     render() {
         this.sliceArcCounter = 0;
-        const sliceSel = this.ctx.selectAll(".pie-slice").data(this.data).join("path")
-            .attr("class", "pie-slice data-element")
-            .attr("d", (d) => this.slice2path(d, this.sliceArcCounter))
-            .attr("fill", (d) => { var _a; return d.color || ((_a = this.cScale) === null || _a === void 0 ? void 0 : _a.call(this, d.label)) || "#000"; });
+        let sliceSel;
+        if (this.data.length === 1) {
+            this.ctx.selectAll(".pie-slice").remove();
+            sliceSel = this.ctx.selectAll(".pie-slice").data(this.data).join("circle")
+                .attr("class", "pie-slice data-element")
+                .attr("cx", this.cx)
+                .attr("cy", this.cy)
+                .attr("r", this.radius)
+                .attr("fill", (d) => { var _a; return d.color || ((_a = this.cScale) === null || _a === void 0 ? void 0 : _a.call(this, d.label)) || "#000"; })
+                .on("click", (ev, d) => {
+                var _a, _b;
+                ev.stopPropagation();
+                (_b = (_a = this.chartConfig).onDataSelect) === null || _b === void 0 ? void 0 : _b.call(_a, d);
+            });
+        }
+        else {
+            sliceSel = this.ctx.selectAll(".pie-slice").data(this.data).join("path")
+                .attr("class", "pie-slice data-element")
+                .attr("d", (d) => this.slice2path(d, this.sliceArcCounter))
+                .attr("fill", (d) => { var _a; return d.color || ((_a = this.cScale) === null || _a === void 0 ? void 0 : _a.call(this, d.label)) || "#000"; })
+                .on("click", (ev, d) => {
+                var _a, _b;
+                ev.stopPropagation();
+                (_b = (_a = this.chartConfig).onDataSelect) === null || _b === void 0 ? void 0 : _b.call(_a, d);
+            });
+        }
         enableTooltip(sliceSel, (d) => `${d.label}: ${d.value}`);
         if (this.chartConfig.legend) {
             this.renderLegend();

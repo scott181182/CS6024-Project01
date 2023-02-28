@@ -39,7 +39,9 @@ class AbstractChart {
 }
 class AbstractXYChart extends AbstractChart {
     renderAxes(xWrapWidth) {
+        this.svg.selectAll(".x-axis,.x-label,.y-axis,.y-label").remove();
         const xAxisSel = this.ctx.append("g")
+            .attr("class", "x-axis")
             .call(this.xAxis)
             .attr("transform", `translate(0, ${this.drawConfig.height})`);
         if (xWrapWidth !== undefined) {
@@ -53,6 +55,7 @@ class AbstractXYChart extends AbstractChart {
             .attr("y", this.margin.top + this.drawConfig.height + this.margin.bottom - 6)
             .text(this.chartConfig.xAxisLabel);
         this.ctx.append("g")
+            .attr("class", "y-axis")
             .call(this.yAxis);
         this.svg.append("text")
             .attr("class", "y-label")
@@ -79,7 +82,7 @@ function elementMapper(mapFn) {
         return { data, unknownCount };
     };
 }
-function binMapper(bucketFn, mapFn) {
+function aggregateMapper(bucketFn, mapFn) {
     return (sourceData) => {
         const dict = {};
         let unknownCount = 0;
@@ -97,6 +100,27 @@ function binMapper(bucketFn, mapFn) {
             }
         }
         const data = Object.entries(dict).map(([bucket, count]) => mapFn(bucket, count));
+        return { data, unknownCount };
+    };
+}
+function binMapper(mapFn, binConfig) {
+    let bin = d3.bin();
+    if (binConfig === null || binConfig === void 0 ? void 0 : binConfig.bins) {
+        bin = bin.thresholds(binConfig.bins);
+    }
+    return (sourceData) => {
+        const mapData = [];
+        let unknownCount = 0;
+        for (const t of sourceData) {
+            const d = mapFn(t);
+            if (d !== undefined) {
+                mapData.push(d);
+            }
+            else {
+                unknownCount++;
+            }
+        }
+        const data = bin(mapData);
         return { data, unknownCount };
     };
 }

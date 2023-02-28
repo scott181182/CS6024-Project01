@@ -1,14 +1,12 @@
-interface BarConfig extends XYChartConfig<string, number> {
+interface CommonBarConfig {
     labelOrder?: string[];
     labelSort?: (a: string, b: string) => number;
     sort?: (a: BarData, b: BarData) => number;
     colorScheme?: readonly string[];
 }
-interface HorizontalBarConfig extends XYChartConfig<number, string> {
-    labelOrder?: string[];
-    labelSort?: (a: string, b: string) => number;
-    sort?: (a: BarData, b: BarData) => number;
-    colorScheme?: readonly string[];
+interface BarConfig extends CommonBarConfig, XYChartConfig<BarData, string, number> {
+}
+interface HorizontalBarConfig extends CommonBarConfig, XYChartConfig<BarData, number, string> {
 }
 interface BarData {
     label: string;

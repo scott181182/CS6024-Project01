@@ -1,4 +1,4 @@
-interface PieConfig extends ChartConfig {
+interface PieConfig extends ChartConfig<PieData> {
     colorScheme?: readonly string[];
     legend?: boolean;
 }
