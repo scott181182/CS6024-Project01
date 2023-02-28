@@ -16,24 +16,24 @@ interface BarData {
     tooltip?: string;
     color?: string;
 }
-declare class BarChart extends AbstractXYChart<BarData, "label", "value", BarConfig> {
+declare class BarChart<T> extends AbstractXYChart<T, BarData, "label", "value", BarConfig> {
     protected xScale: d3.ScaleBand<string>;
     protected yScale: d3.ScaleLinear<number, number, never>;
     protected xAxis: d3.Axis<string>;
     protected yAxis: d3.Axis<number>;
     protected cScale?: d3.ScaleOrdinal<string, string>;
-    constructor(chartData: ChartData<BarData>, barConfig: BarConfig, drawConfig: DrawConfig);
-    protected setData(chartData: ChartData<BarData>): void;
+    setData(sourceData: T[]): void;
+    constructor(rawData: T[], dataMapper: DataMapperFn<T, BarData>, barConfig: BarConfig, drawConfig: DrawConfig);
     render(): void;
 }
-declare class HorizontalBarChart extends AbstractXYChart<BarData, "value", "label", HorizontalBarConfig> {
+declare class HorizontalBarChart<T> extends AbstractXYChart<T, BarData, "value", "label", HorizontalBarConfig> {
     protected xScale: d3.ScaleLinear<number, number, never>;
     protected yScale: d3.ScaleBand<string>;
     protected xAxis: d3.Axis<number>;
     protected yAxis: d3.Axis<string>;
     protected cScale?: d3.ScaleOrdinal<string, string>;
-    constructor(chartData: ChartData<BarData>, barConfig: HorizontalBarConfig, drawConfig: DrawConfig);
-    protected setData(chartData: ChartData<BarData>): void;
+    setData(sourceData: T[]): void;
+    constructor(rawData: T[], dataMapper: DataMapperFn<T, BarData>, barConfig: HorizontalBarConfig, drawConfig: DrawConfig);
     render(): void;
 }
 //# sourceMappingURL=BarChart.d.ts.map

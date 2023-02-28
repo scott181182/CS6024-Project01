@@ -21,7 +21,7 @@ interface BarData {
     color?: string;
 }
 
-class BarChart extends AbstractXYChart<BarData, "label", "value", BarConfig>
+class BarChart<T> extends AbstractXYChart<T, BarData, "label", "value", BarConfig>
 {
     protected xScale: d3.ScaleBand<string>;
     protected yScale: d3.ScaleLinear<number, number, never>;
@@ -32,12 +32,23 @@ class BarChart extends AbstractXYChart<BarData, "label", "value", BarConfig>
 
 
 
+    public setData(sourceData: T[]): void {
+        super.setData(sourceData);
+
+        const sortFn = this.chartConfig.sort ||
+            (this.chartConfig.labelSort ? (a: BarData, b: BarData) => this.chartConfig.labelSort!(a.label, b.label) :
+            (this.chartConfig.labelOrder ? ((a: BarData, b: BarData) => this.chartConfig.labelOrder!.indexOf(a.label) - this.chartConfig.labelOrder!.indexOf(b.label)) :
+                (a: BarData, b: BarData) => a.label.localeCompare(b.label)));
+        this.data.sort(sortFn);
+    }
+
     public constructor(
-        chartData: ChartData<BarData>,
+        rawData: T[],
+        dataMapper: DataMapperFn<T, BarData>,
         barConfig: BarConfig,
         drawConfig: DrawConfig,
     ) {
-        super(chartData, barConfig, drawConfig);
+        super(rawData, dataMapper, barConfig, drawConfig);
 
         const xDomain = this.data.map(({ label }) => label);
         const yDomain = [0, d3.max(this.data, ({ value }) => value)!] as const;
@@ -60,16 +71,6 @@ class BarChart extends AbstractXYChart<BarData, "label", "value", BarConfig>
         this.render();
     }
 
-    protected setData(chartData: ChartData<BarData>): void {
-        super.setData(chartData);
-
-        const sortFn = this.chartConfig.sort ||
-            (this.chartConfig.labelSort ? (a: BarData, b: BarData) => this.chartConfig.labelSort!(a.label, b.label) :
-            (this.chartConfig.labelOrder ? ((a: BarData, b: BarData) => this.chartConfig.labelOrder!.indexOf(a.label) - this.chartConfig.labelOrder!.indexOf(b.label)) :
-                (a: BarData, b: BarData) => a.label.localeCompare(b.label)));
-        this.data.sort(sortFn);
-    }
-
     public render() {
         const barSel = this.ctx.selectAll(".bar").data(this.data).join("rect")
             .attr("class", "bar data-element")
@@ -83,7 +84,7 @@ class BarChart extends AbstractXYChart<BarData, "label", "value", BarConfig>
 }
 
 
-class HorizontalBarChart extends AbstractXYChart<BarData, "value", "label", HorizontalBarConfig>
+class HorizontalBarChart<T> extends AbstractXYChart<T, BarData, "value", "label", HorizontalBarConfig>
 {
     protected xScale: d3.ScaleLinear<number, number, never>;
     protected yScale: d3.ScaleBand<string>;
@@ -94,12 +95,23 @@ class HorizontalBarChart extends AbstractXYChart<BarData, "value", "label", Hori
 
 
 
+    public setData(sourceData: T[]): void {
+        super.setData(sourceData);
+
+        const sortFn = this.chartConfig.sort ||
+            (this.chartConfig.labelSort ? (a: BarData, b: BarData) => this.chartConfig.labelSort!(a.label, b.label) :
+            (this.chartConfig.labelOrder ? ((a: BarData, b: BarData) => this.chartConfig.labelOrder!.indexOf(a.label) - this.chartConfig.labelOrder!.indexOf(b.label)) :
+                (a: BarData, b: BarData) => a.label.localeCompare(b.label)));
+        this.data.sort(sortFn);
+    }
+
     public constructor(
-        chartData: ChartData<BarData>,
+        rawData: T[],
+        dataMapper: DataMapperFn<T, BarData>,
         barConfig: HorizontalBarConfig,
         drawConfig: DrawConfig,
     ) {
-        super(chartData, barConfig, drawConfig);
+        super(rawData, dataMapper, barConfig, drawConfig);
 
         const xDomain = [0, d3.max(this.data, ({ value }) => value)!] as const;
         const yDomain = this.data.map(({ label }) => label)
@@ -119,36 +131,7 @@ class HorizontalBarChart extends AbstractXYChart<BarData, "value", "label", Hori
         this.yAxis = d3.axisLeft(this.yScale);
 
         this.renderAxes();
-        // this.ctx.append("g")
-        //     .call(this.xAxis)
-        //         .attr("transform", `translate(0, ${drawConfig.height})`)
-        // this.svg.append("text")
-        //     .attr("class", "x-label")
-        //     .attr("text-anchor", "middle")
-        //     .attr("x", this.margin.left + drawConfig.width / 2)
-        //     .attr("y", this.margin.top + drawConfig.height + this.margin.bottom - 6)
-        //     .text(this.chartConfig.xAxisLabel);
-        // this.ctx.append("g")
-        //     .call(this.yAxis)
-        // this.svg.append("text")
-        //     .attr("class", "y-label")
-        //     .attr("text-anchor", "middle")
-        //     .attr("x", 0 - this.margin.top - drawConfig.height / 2)
-        //     .attr("y", 50)
-        //     .attr("transform", "rotate(-90)")
-        //     .text(this.chartConfig.yAxisLabel);
-
         this.render();
-    }
-
-    protected setData(chartData: ChartData<BarData>): void {
-        super.setData(chartData);
-
-        const sortFn = this.chartConfig.sort ||
-            (this.chartConfig.labelSort ? (a: BarData, b: BarData) => this.chartConfig.labelSort!(a.label, b.label) :
-            (this.chartConfig.labelOrder ? ((a: BarData, b: BarData) => this.chartConfig.labelOrder!.indexOf(a.label) - this.chartConfig.labelOrder!.indexOf(b.label)) :
-                (a: BarData, b: BarData) => a.label.localeCompare(b.label)));
-        this.data.sort(sortFn);
     }
 
     public render() {

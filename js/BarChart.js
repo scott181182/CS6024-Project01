@@ -1,7 +1,15 @@
 "use strict";
 class BarChart extends AbstractXYChart {
-    constructor(chartData, barConfig, drawConfig) {
-        super(chartData, barConfig, drawConfig);
+    setData(sourceData) {
+        super.setData(sourceData);
+        const sortFn = this.chartConfig.sort ||
+            (this.chartConfig.labelSort ? (a, b) => this.chartConfig.labelSort(a.label, b.label) :
+                (this.chartConfig.labelOrder ? ((a, b) => this.chartConfig.labelOrder.indexOf(a.label) - this.chartConfig.labelOrder.indexOf(b.label)) :
+                    (a, b) => a.label.localeCompare(b.label)));
+        this.data.sort(sortFn);
+    }
+    constructor(rawData, dataMapper, barConfig, drawConfig) {
+        super(rawData, dataMapper, barConfig, drawConfig);
         const xDomain = this.data.map(({ label }) => label);
         const yDomain = [0, d3.max(this.data, ({ value }) => value)];
         this.xScale = d3.scaleBand()
@@ -19,14 +27,6 @@ class BarChart extends AbstractXYChart {
         this.renderAxes(this.xScale.bandwidth());
         this.render();
     }
-    setData(chartData) {
-        super.setData(chartData);
-        const sortFn = this.chartConfig.sort ||
-            (this.chartConfig.labelSort ? (a, b) => this.chartConfig.labelSort(a.label, b.label) :
-                (this.chartConfig.labelOrder ? ((a, b) => this.chartConfig.labelOrder.indexOf(a.label) - this.chartConfig.labelOrder.indexOf(b.label)) :
-                    (a, b) => a.label.localeCompare(b.label)));
-        this.data.sort(sortFn);
-    }
     render() {
         const barSel = this.ctx.selectAll(".bar").data(this.data).join("rect")
             .attr("class", "bar data-element")
@@ -39,8 +39,16 @@ class BarChart extends AbstractXYChart {
     }
 }
 class HorizontalBarChart extends AbstractXYChart {
-    constructor(chartData, barConfig, drawConfig) {
-        super(chartData, barConfig, drawConfig);
+    setData(sourceData) {
+        super.setData(sourceData);
+        const sortFn = this.chartConfig.sort ||
+            (this.chartConfig.labelSort ? (a, b) => this.chartConfig.labelSort(a.label, b.label) :
+                (this.chartConfig.labelOrder ? ((a, b) => this.chartConfig.labelOrder.indexOf(a.label) - this.chartConfig.labelOrder.indexOf(b.label)) :
+                    (a, b) => a.label.localeCompare(b.label)));
+        this.data.sort(sortFn);
+    }
+    constructor(rawData, dataMapper, barConfig, drawConfig) {
+        super(rawData, dataMapper, barConfig, drawConfig);
         const xDomain = [0, d3.max(this.data, ({ value }) => value)];
         const yDomain = this.data.map(({ label }) => label);
         this.xScale = d3.scaleLinear()
@@ -56,33 +64,7 @@ class HorizontalBarChart extends AbstractXYChart {
         this.xAxis = d3.axisBottom(this.xScale);
         this.yAxis = d3.axisLeft(this.yScale);
         this.renderAxes();
-        // this.ctx.append("g")
-        //     .call(this.xAxis)
-        //         .attr("transform", `translate(0, ${drawConfig.height})`)
-        // this.svg.append("text")
-        //     .attr("class", "x-label")
-        //     .attr("text-anchor", "middle")
-        //     .attr("x", this.margin.left + drawConfig.width / 2)
-        //     .attr("y", this.margin.top + drawConfig.height + this.margin.bottom - 6)
-        //     .text(this.chartConfig.xAxisLabel);
-        // this.ctx.append("g")
-        //     .call(this.yAxis)
-        // this.svg.append("text")
-        //     .attr("class", "y-label")
-        //     .attr("text-anchor", "middle")
-        //     .attr("x", 0 - this.margin.top - drawConfig.height / 2)
-        //     .attr("y", 50)
-        //     .attr("transform", "rotate(-90)")
-        //     .text(this.chartConfig.yAxisLabel);
         this.render();
-    }
-    setData(chartData) {
-        super.setData(chartData);
-        const sortFn = this.chartConfig.sort ||
-            (this.chartConfig.labelSort ? (a, b) => this.chartConfig.labelSort(a.label, b.label) :
-                (this.chartConfig.labelOrder ? ((a, b) => this.chartConfig.labelOrder.indexOf(a.label) - this.chartConfig.labelOrder.indexOf(b.label)) :
-                    (a, b) => a.label.localeCompare(b.label)));
-        this.data.sort(sortFn);
     }
     render() {
         const barSel = this.ctx.selectAll(".bar").data(this.data).join("rect")

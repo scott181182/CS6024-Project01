@@ -6,7 +6,7 @@ interface LineConfig extends XYChartConfig<number, number> {
     yScale?: "linear" | "log";
 }
 
-class LineChart extends AbstractXYChart<Point2D, "x", "y", LineConfig>
+class LineChart<T> extends AbstractXYChart<T, Point2D, "x", "y", LineConfig>
 {
     protected xScale: d3.ScaleContinuousNumeric<number, number, never>;
     protected yScale: d3.ScaleContinuousNumeric<number, number, never>;
@@ -16,11 +16,12 @@ class LineChart extends AbstractXYChart<Point2D, "x", "y", LineConfig>
 
 
     public constructor(
-        chartData: ChartData<Point2D>,
+        rawData: T[],
+        dataMapper: DataMapperFn<T, Point2D>,
         lineConfig: LineConfig,
         drawConfig: DrawConfig,
     ) {
-        super(chartData, lineConfig, drawConfig);
+        super(rawData, dataMapper, lineConfig, drawConfig);
 
         const xDomain = d3.extent(this.data, ({ x }) => x) as  [number, number];
         const yDomain = d3.extent(this.data, ({ y }) => y) as  [number, number];
@@ -42,25 +43,6 @@ class LineChart extends AbstractXYChart<Point2D, "x", "y", LineConfig>
         }
 
         this.renderAxes();
-
-        // this.ctx.append("g")
-        //     .call(this.xAxis)
-        //     .attr("transform", `translate(0, ${drawConfig.height})`);
-        // this.svg.append("text")
-        //     .attr("class", "x-label")
-        //     .attr("text-anchor", "middle")
-        //     .attr("x", margin.left + drawConfig.width / 2)
-        //     .attr("y", margin.top + drawConfig.height + margin.bottom - 6)
-        //     .text(this.lineConfig.xAxisLabel);
-        // this.ctx.append("g")
-        //     .call(this.yAxis);
-        // this.svg.append("text")
-        //     .attr("class", "y-label")
-        //     .attr("text-anchor", "middle")
-        //     .attr("x", 0 - margin.top - drawConfig.height / 2)
-        //     .attr("y", 50)
-        //     .attr("transform", "rotate(-90)")
-        //     .text(this.lineConfig.yAxisLabel);
 
         this.ctx.append("polyline")
             .attr("class", "line-plot-line");

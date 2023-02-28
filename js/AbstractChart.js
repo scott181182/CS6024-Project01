@@ -1,10 +1,12 @@
 "use strict";
 class AbstractChart {
-    setData(chartData) {
+    setData(sourceData) {
+        const chartData = this.dataMapper(sourceData);
         this.data = chartData.data;
         this.unknownPoints = chartData.unknownCount;
     }
-    constructor(chartData, chartConfig, drawConfig) {
+    constructor(rawData, dataMapper, chartConfig, drawConfig) {
+        this.dataMapper = dataMapper;
         this.chartConfig = chartConfig;
         this.drawConfig = drawConfig;
         this.data = [];
@@ -14,7 +16,14 @@ class AbstractChart {
         this.ctx = this.svg.append("g")
             .attr("class", "chart-area")
             .attr("transform", `translate(${this.margin.left}, ${this.margin.top})`);
-        this.setData(chartData);
+        this.setData(rawData);
+        if (chartConfig.title) {
+            this.svg.append("text")
+                .attr("text-anchor", "middle")
+                .attr("x", this.margin.left + this.drawConfig.width / 2)
+                .attr("y", this.margin.top - 10)
+                .html(chartConfig.title);
+        }
     }
     renderUnknown() {
         if (!this.chartConfig.hideUnknown && this.unknownPoints) {
@@ -54,37 +63,41 @@ class AbstractXYChart extends AbstractChart {
             .text(this.chartConfig.yAxisLabel);
     }
 }
-function dataMapper(sourceData, mapFn) {
-    const data = [];
-    let unknownCount = 0;
-    for (const t of sourceData) {
-        const d = mapFn(t);
-        if (d !== undefined) {
-            data.push(d);
+function elementMapper(mapFn) {
+    return (sourceData) => {
+        const data = [];
+        let unknownCount = 0;
+        for (const t of sourceData) {
+            const d = mapFn(t);
+            if (d !== undefined) {
+                data.push(d);
+            }
+            else {
+                unknownCount++;
+            }
         }
-        else {
-            unknownCount++;
-        }
-    }
-    return { data, unknownCount };
+        return { data, unknownCount };
+    };
 }
-function binMapper(sourceData, bucketFn, mapFn) {
-    const dict = {};
-    let unknownCount = 0;
-    for (const t of sourceData) {
-        const key = bucketFn(t);
-        if (!key) {
-            unknownCount++;
-            continue;
+function binMapper(bucketFn, mapFn) {
+    return (sourceData) => {
+        const dict = {};
+        let unknownCount = 0;
+        for (const t of sourceData) {
+            const key = bucketFn(t);
+            if (!key) {
+                unknownCount++;
+                continue;
+            }
+            if (key in dict) {
+                dict[key]++;
+            }
+            else {
+                dict[key] = 1;
+            }
         }
-        if (key in dict) {
-            dict[key]++;
-        }
-        else {
-            dict[key] = 1;
-        }
-    }
-    const data = Object.entries(dict).map(([bucket, count]) => mapFn(bucket, count));
-    return { data, unknownCount };
+        const data = Object.entries(dict).map(([bucket, count]) => mapFn(bucket, count));
+        return { data, unknownCount };
+    };
 }
 //# sourceMappingURL=AbstractChart.js.map

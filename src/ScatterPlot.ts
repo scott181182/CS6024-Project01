@@ -9,10 +9,11 @@ interface ScatterConfig extends XYChartConfig<number, number> {
 interface ScatterData extends Point2D {
     r?: number;
     color?: string;
+    className?: string;
     tooltip?: string;
 }
 
-class ScatterPlot extends AbstractXYChart<ScatterData, "x", "y", ScatterConfig>
+class ScatterPlot<T> extends AbstractXYChart<T, ScatterData, "x", "y", ScatterConfig>
 {
     protected xScale: d3.ScaleContinuousNumeric<number, number, never>;
     protected yScale: d3.ScaleContinuousNumeric<number, number, never>;
@@ -22,11 +23,12 @@ class ScatterPlot extends AbstractXYChart<ScatterData, "x", "y", ScatterConfig>
 
 
     public constructor(
-        chartData: ChartData<ScatterData>,
+        rawData: T[],
+        dataMapper: DataMapperFn<T, ScatterData>,
         scatterConfig: ScatterConfig,
         drawConfig: DrawConfig,
     ) {
-        super(chartData, scatterConfig, drawConfig);
+        super(rawData, dataMapper, scatterConfig, drawConfig);
 
         const xDomain = d3.extent(this.data, ({ x }) => x) as  [number, number];
         const yDomain = d3.extent(this.data, ({ y }) => y) as  [number, number];
@@ -42,32 +44,13 @@ class ScatterPlot extends AbstractXYChart<ScatterData, "x", "y", ScatterConfig>
         this.yAxis = d3.axisLeft<number>(this.yScale);
 
         this.renderAxes();
-        // this.ctx.append("g")
-        //     .call(this.xAxis)
-        //     .attr("transform", `translate(0, ${drawConfig.height})`);
-        // this.svg.append("text")
-        //     .attr("class", "x-label")
-        //     .attr("text-anchor", "middle")
-        //     .attr("x", this.margin.left + drawConfig.width / 2)
-        //     .attr("y", this.margin.top + drawConfig.height + this.margin.bottom - 6)
-        //     .text(this.chartConfig.xAxisLabel);
-        // this.ctx.append("g")
-        //     .call(this.yAxis);
-        // this.svg.append("text")
-        //     .attr("class", "y-label")
-        //     .attr("text-anchor", "middle")
-        //     .attr("x", 0 - this.margin.top - drawConfig.height / 2)
-        //     .attr("y", 50)
-        //     .attr("transform", "rotate(-90)")
-        //     .text(this.chartConfig.yAxisLabel);
-
         this.render();
     }
 
     public render() {
         const pointSel = this.ctx.selectAll(".scatter-point")
             .data(this.data).join("circle")
-                .attr("class", "scatter-point data-element")
+                .attr("class", (d) => `scatter-point data-element ${d.className}`)
                 .attr("cx", (d) => this.xScale(d.x)!)
                 .attr("cy", (d) => this.yScale(d.y))
                 .attr("r", (d) => d.r || 2)
@@ -87,69 +70,87 @@ const SOL_PLANETS: ScatterData[] = [
         tooltip: "Mercury",
         y: 0.330 / EARTH_MASS,
         x: 4879 / EARTH_DIAMETER,
-        color: "#726658",
+        color: "#ffc74a",
         r: 4,
+        className: "sol-planet",
     },
     {
         tooltip: "Venus",
         y: 4.87 / EARTH_MASS,
         x: 12104 / EARTH_DIAMETER,
-        color: "#efecdd",
+        color: "#ff7a18",
         r: 4,
+        className: "sol-planet",
     },
     {
         tooltip: "Earth",
         y: 1,
         x: 1,
-        color: "#a49fb3",
+        color: "#23ff89",
         r: 4,
+        className: "sol-planet",
     },
     {
         tooltip: "Mars",
         y: 0.642 / EARTH_MASS,
         x: 6792 / EARTH_DIAMETER,
-        color: "#896545",
+        color: "#db2520",
         r: 4,
+        className: "sol-planet",
     },
     {
         tooltip: "Jupiter",
         y: 1898 / EARTH_MASS,
         x: 142984 / EARTH_DIAMETER,
-        color: "#c3beab",
+        color: "#e4a47d",
         r: 4,
+        className: "sol-planet",
     },
     {
         tooltip: "Saturn",
         y: 568 / EARTH_MASS,
         x: 120536 / EARTH_DIAMETER,
-        color: "#c9b38e",
+        color: "#fea050",
         r: 4,
+        className: "sol-planet",
     },
     {
         tooltip: "Uranus",
         y: 86.8 / EARTH_MASS,
         x: 51118 / EARTH_DIAMETER,
-        color: "#a8c0c2",
+        color: "#38b9fe",
         r: 4,
+        className: "sol-planet",
     },
     {
         tooltip: "Neptune",
         y: 102 / EARTH_MASS,
         x: 49528 / EARTH_DIAMETER,
-        color: "#91afba",
+        color: "#6c9fcb",
         r: 4,
+        className: "sol-planet",
     },
 ];
-class PlanetScatterPlot extends ScatterPlot
+class PlanetScatterPlot extends ScatterPlot<PlanetInfo>
 {
+    public setData(sourceData: PlanetInfo[]): void {
+        super.setData(sourceData);
+        this.data.push(...SOL_PLANETS);
+    }
     public constructor(
-        chartData: ChartData<ScatterData>,
+        planets: PlanetInfo[],
         scatterConfig: ScatterConfig,
         drawConfig: DrawConfig,
     ) {
-        super({
-            data: [ ...chartData.data, ...SOL_PLANETS ],
-            unknownCount: chartData.unknownCount
-        }, scatterConfig, drawConfig);
+        super(
+            planets,
+            elementMapper((d) => (d.pl_rade !== undefined && d.pl_bmasse !== undefined ? {
+                x: d.pl_rade,
+                y: d.pl_bmasse,
+                tooltip: d.pl_name
+            } : undefined)),
+            scatterConfig,
+            drawConfig
+        );
     }
 }

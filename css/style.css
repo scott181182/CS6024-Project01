@@ -12,6 +12,9 @@
 .data-element:hover {
     opacity: 1;
 }
+.data-element.sol-planet {
+    opacity: 1;
+}
 
 .bar {
     stroke: #000;

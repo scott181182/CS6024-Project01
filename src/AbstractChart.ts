@@ -1,7 +1,11 @@
 
 
+interface ChartConfig {
+    hideUnknown?: boolean;
+    title?: string;
+}
 
-abstract class AbstractChart<D, Config extends ChartConfig>
+abstract class AbstractChart<T, D, Config extends ChartConfig>
 {
     protected data: D[] = [];
 
@@ -11,7 +15,8 @@ abstract class AbstractChart<D, Config extends ChartConfig>
     protected margin: Margin;
     protected unknownPoints = 0;
 
-    protected setData(chartData: ChartData<D>) {
+    public setData(sourceData: T[]) {
+        const chartData = this.dataMapper(sourceData);
         this.data = chartData.data;
         this.unknownPoints = chartData.unknownCount;
     }
@@ -19,7 +24,8 @@ abstract class AbstractChart<D, Config extends ChartConfig>
 
 
     protected constructor(
-        chartData: ChartData<D>,
+        rawData: T[],
+        protected dataMapper: DataMapperFn<T, D>,
         protected chartConfig: Config,
         protected drawConfig: DrawConfig,
     ) {
@@ -29,7 +35,15 @@ abstract class AbstractChart<D, Config extends ChartConfig>
             .attr("class", "chart-area")
             .attr("transform", `translate(${this.margin.left}, ${this.margin.top})`);
 
-        this.setData(chartData);
+        this.setData(rawData);
+
+        if(chartConfig.title) {
+            this.svg.append("text")
+                .attr("text-anchor", "middle")
+                .attr("x", this.margin.left + this.drawConfig.width / 2)
+                .attr("y", this.margin.top - 10)
+                .html(chartConfig.title);
+        }
     }
 
     public renderUnknown() {
@@ -46,10 +60,24 @@ abstract class AbstractChart<D, Config extends ChartConfig>
 
     public abstract render(): void;
 }
+
+
+
+
+
+interface XYChartConfig<X, Y> extends ChartConfig {
+    xAxisLabel: string;
+    xTickFormat?: (d: X) => string;
+    yAxisLabel: string;
+    yTickFormat?: (d: Y) => string;
+}
+
 abstract class AbstractXYChart<
-    D, XKey extends keyof D, YKey extends keyof D,
+    T, D,
+    XKey extends keyof D,
+    YKey extends keyof D,
     Config extends XYChartConfig<D[XKey], D[YKey]>
-> extends AbstractChart<D, Config> {
+> extends AbstractChart<T, D, Config> {
     protected abstract xAxis: d3.Axis<D[XKey]>;
     protected abstract yAxis: d3.Axis<D[YKey]>;
 
@@ -81,33 +109,41 @@ abstract class AbstractXYChart<
 
 
 
+
+
+type DataMapperFn<T, D> = (data: T[]) => ChartData<D>;
 interface ChartData<D> {
     data: D[];
     unknownCount: number;
 }
-function dataMapper<T, D>(sourceData: T[], mapFn: (d: T) => D | undefined): ChartData<D> {
-    const data: D[] = [];
-    let unknownCount = 0;
-    for(const t of sourceData) {
-        const d = mapFn(t);
-        if(d !== undefined) { data.push(d); }
-        else { unknownCount++; }
-    }
-    return { data, unknownCount };
-}
-function binMapper<T, D>(sourceData: T[], bucketFn: (d: T) => string | undefined, mapFn: (bucket: string, count: number) => D): ChartData<D> {
-    const dict: Record<string, number> = {};
-    let unknownCount = 0;
-    for(const t of sourceData) {
-        const key = bucketFn(t);
-        if(!key) {
-            unknownCount++;
-            continue;
-        }
-        if(key in dict) { dict[key]++; }
-        else { dict[key] = 1 }
 
+function elementMapper<T, D>(mapFn: (d: T) => D | undefined): DataMapperFn<T, D> {
+    return (sourceData) => {
+        const data: D[] = [];
+        let unknownCount = 0;
+        for(const t of sourceData) {
+            const d = mapFn(t);
+            if(d !== undefined) { data.push(d); }
+            else { unknownCount++; }
+        }
+        return { data, unknownCount };
     }
-    const data = Object.entries(dict).map(([bucket, count]) => mapFn(bucket, count));
-    return { data, unknownCount };
+}
+function binMapper<T, D>(bucketFn: (d: T) => string | undefined, mapFn: (bucket: string, count: number) => D): DataMapperFn<T, D> {
+    return (sourceData) => {
+        const dict: Record<string, number> = {};
+        let unknownCount = 0;
+        for(const t of sourceData) {
+            const key = bucketFn(t);
+            if(!key) {
+                unknownCount++;
+                continue;
+            }
+            if(key in dict) { dict[key]++; }
+            else { dict[key] = 1 }
+
+        }
+        const data = Object.entries(dict).map(([bucket, count]) => mapFn(bucket, count));
+        return { data, unknownCount };
+    }
 }
