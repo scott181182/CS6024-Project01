@@ -108,6 +108,7 @@ function visualizeData(data: PlanetInfo[]) {
             title: "Stars in an Exoplanet's System",
             xAxisLabel: "Stars In System",
             yAxisLabel: yLabel,
+            colorScheme: d3.schemeCategory10,
             onDataSelect(selected) {
                 onDataRangeUpdate(data.filter((d) => d.sy_snum === parseInt(selected.label)))
             },
@@ -145,8 +146,8 @@ function visualizeData(data: PlanetInfo[]) {
             };
         }), {
             title: "Stellar Classification of Exoplanet Host Stars",
-            xAxisLabel: "Star Sequence",
-            yAxisLabel: yLabel,
+            xAxisLabel: yLabel,
+            yAxisLabel: "Stellar Classification",
             labelSort: (a, b) => SPEC_SEQUENCE.indexOf(a) - SPEC_SEQUENCE.indexOf(b),
             onDataSelect(selected) {
                 onDataRangeUpdate(data.filter((d) => spectypeFromPlanet(d) === selected.label))
