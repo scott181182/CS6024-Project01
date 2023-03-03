@@ -103,7 +103,10 @@ function visualizeData(data: PlanetInfo[]) {
 
     const starBarChart = new BarChart(
         data,
-        aggregateMapper((info) => `${info.sy_snum}`, (label, value) => ({ label, value })),
+        aggregateMapper(
+            (info) => `${info.sy_snum}`,
+            (label, value) => ({ label, value, tooltip: `${label} Stars: ${value}` })
+        ),
         {
             title: "Stars in an Exoplanet's System",
             xAxisLabel: "Stars In System",
@@ -121,7 +124,7 @@ function visualizeData(data: PlanetInfo[]) {
         data,
         aggregateMapper(
             (info) => `${info.sy_pnum}`,
-            (label, value) => ({ label, value })
+            (label, value) => ({ label, value, tooltip: `${label} Planets: ${value}` })
         ), {
             title: "Planets in an Exoplanet's System",
             xAxisLabel: "Planets in System",

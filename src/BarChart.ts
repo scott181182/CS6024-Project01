@@ -17,13 +17,13 @@ interface BarData {
     color?: string;
 }
 
-class BarChart<T> extends AbstractXYChart<T, BarData, "label", "value", BarConfig>
+abstract class AbstractBarChart<
+    T,
+    XKey extends keyof BarData,
+    YKey extends keyof BarData,
+    Config extends CommonBarConfig & XYChartConfig<BarData, BarData[XKey], BarData[YKey]>
+> extends AbstractXYChart<T, BarData, XKey, YKey, Config>
 {
-    protected xScale!: d3.ScaleBand<string>;
-    protected yScale!: d3.ScaleLinear<number, number, never>;
-    protected xAxis!: d3.Axis<string>;
-    protected yAxis!: d3.Axis<number>;
-
     protected cScale?: d3.ScaleOrdinal<string, string>;
 
 
@@ -37,8 +37,38 @@ class BarChart<T> extends AbstractXYChart<T, BarData, "label", "value", BarConfi
                 (a: BarData, b: BarData) => a.label.localeCompare(b.label)));
         this.data.sort(sortFn);
 
+        this.initAxes();
+    }
+
+    protected abstract initAxes(): void;
+
+    public constructor(
+        rawData: T[],
+        dataMapper: DataMapperFn<T, BarData>,
+        barConfig: Config,
+        drawConfig: DrawConfig,
+    ) {
+        super(rawData, dataMapper, barConfig, drawConfig);
+
+        this.render();
+    }
+
+}
 
 
+
+class BarChart<T> extends AbstractBarChart<T, "label", "value", BarConfig>
+{
+    protected xScale!: d3.ScaleBand<string>;
+    protected yScale!: d3.ScaleLinear<number, number, never>;
+    protected xAxis!: d3.Axis<string>;
+    protected yAxis!: d3.Axis<number>;
+
+    protected cScale?: d3.ScaleOrdinal<string, string>;
+
+
+
+    protected initAxes(): void {
         const xDomain = this.data.map(({ label }) => label);
         const yDomain = [0, d3.max(this.data, ({ value }) => value)!] as const;
 
@@ -59,17 +89,6 @@ class BarChart<T> extends AbstractXYChart<T, BarData, "label", "value", BarConfi
         this.renderAxes(this.xScale.bandwidth());
     }
 
-    public constructor(
-        rawData: T[],
-        dataMapper: DataMapperFn<T, BarData>,
-        barConfig: BarConfig,
-        drawConfig: DrawConfig,
-    ) {
-        super(rawData, dataMapper, barConfig, drawConfig);
-
-        this.render();
-    }
-
     public render() {
         const barSel = this.ctx.selectAll(".bar").data(this.data).join("rect")
             .attr("class", "bar data-element")
@@ -87,44 +106,27 @@ class BarChart<T> extends AbstractXYChart<T, BarData, "label", "value", BarConfi
 }
 
 
-class HorizontalBarChart<T> extends AbstractXYChart<T, BarData, "value", "label", HorizontalBarConfig>
+class HorizontalBarChart<T> extends AbstractBarChart<T, "value", "label", HorizontalBarConfig>
 {
-    protected xScale: d3.ScaleLinear<number, number, never>;
-    protected yScale: d3.ScaleBand<string>;
-    protected xAxis: d3.Axis<number>;
-    protected yAxis: d3.Axis<string>;
+    protected xScale!: d3.ScaleLinear<number, number, never>;
+    protected yScale!: d3.ScaleBand<string>;
+    protected xAxis!: d3.Axis<number>;
+    protected yAxis!: d3.Axis<string>;
 
     protected cScale?: d3.ScaleOrdinal<string, string>;
 
 
 
-    public setData(sourceData: T[]): void {
-        super.setData(sourceData);
-
-        const sortFn = this.chartConfig.sort ||
-            (this.chartConfig.labelSort ? (a: BarData, b: BarData) => this.chartConfig.labelSort!(a.label, b.label) :
-            (this.chartConfig.labelOrder ? ((a: BarData, b: BarData) => this.chartConfig.labelOrder!.indexOf(a.label) - this.chartConfig.labelOrder!.indexOf(b.label)) :
-                (a: BarData, b: BarData) => a.label.localeCompare(b.label)));
-        this.data.sort(sortFn);
-    }
-
-    public constructor(
-        rawData: T[],
-        dataMapper: DataMapperFn<T, BarData>,
-        barConfig: HorizontalBarConfig,
-        drawConfig: DrawConfig,
-    ) {
-        super(rawData, dataMapper, barConfig, drawConfig);
-
+    protected initAxes(): void {
         const xDomain = [0, d3.max(this.data, ({ value }) => value)!] as const;
         const yDomain = this.data.map(({ label }) => label)
 
         this.xScale = d3.scaleLinear()
             .domain(xDomain)
-            .range([0, drawConfig.width]);
+            .range([0, this.drawConfig.width]);
         this.yScale = d3.scaleBand()
             .domain(yDomain)
-            .range([0, drawConfig.height])
+            .range([0, this.drawConfig.height])
             .padding(0.4);
         if(this.chartConfig.colorScheme) {
             this.cScale = d3.scaleOrdinal(yDomain, this.chartConfig.colorScheme)
@@ -134,7 +136,6 @@ class HorizontalBarChart<T> extends AbstractXYChart<T, BarData, "value", "label"
         this.yAxis = d3.axisLeft(this.yScale);
 
         this.renderAxes();
-        this.render();
     }
 
     public render() {

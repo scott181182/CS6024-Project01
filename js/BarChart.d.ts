@@ -14,24 +14,28 @@ interface BarData {
     tooltip?: string;
     color?: string;
 }
-declare class BarChart<T> extends AbstractXYChart<T, BarData, "label", "value", BarConfig> {
+declare abstract class AbstractBarChart<T, XKey extends keyof BarData, YKey extends keyof BarData, Config extends CommonBarConfig & XYChartConfig<BarData, BarData[XKey], BarData[YKey]>> extends AbstractXYChart<T, BarData, XKey, YKey, Config> {
+    protected cScale?: d3.ScaleOrdinal<string, string>;
+    setData(sourceData: T[]): void;
+    protected abstract initAxes(): void;
+    constructor(rawData: T[], dataMapper: DataMapperFn<T, BarData>, barConfig: Config, drawConfig: DrawConfig);
+}
+declare class BarChart<T> extends AbstractBarChart<T, "label", "value", BarConfig> {
     protected xScale: d3.ScaleBand<string>;
     protected yScale: d3.ScaleLinear<number, number, never>;
     protected xAxis: d3.Axis<string>;
     protected yAxis: d3.Axis<number>;
     protected cScale?: d3.ScaleOrdinal<string, string>;
-    setData(sourceData: T[]): void;
-    constructor(rawData: T[], dataMapper: DataMapperFn<T, BarData>, barConfig: BarConfig, drawConfig: DrawConfig);
+    protected initAxes(): void;
     render(): void;
 }
-declare class HorizontalBarChart<T> extends AbstractXYChart<T, BarData, "value", "label", HorizontalBarConfig> {
+declare class HorizontalBarChart<T> extends AbstractBarChart<T, "value", "label", HorizontalBarConfig> {
     protected xScale: d3.ScaleLinear<number, number, never>;
     protected yScale: d3.ScaleBand<string>;
     protected xAxis: d3.Axis<number>;
     protected yAxis: d3.Axis<string>;
     protected cScale?: d3.ScaleOrdinal<string, string>;
-    setData(sourceData: T[]): void;
-    constructor(rawData: T[], dataMapper: DataMapperFn<T, BarData>, barConfig: HorizontalBarConfig, drawConfig: DrawConfig);
+    protected initAxes(): void;
     render(): void;
 }
 //# sourceMappingURL=BarChart.d.ts.map

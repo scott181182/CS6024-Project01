@@ -80,7 +80,7 @@ function visualizeData(data) {
             chart.render();
         }
     };
-    const starBarChart = new BarChart(data, aggregateMapper((info) => `${info.sy_snum}`, (label, value) => ({ label, value })), {
+    const starBarChart = new BarChart(data, aggregateMapper((info) => `${info.sy_snum}`, (label, value) => ({ label, value, tooltip: `${label} Stars: ${value}` })), {
         title: "Stars in an Exoplanet's System",
         xAxisLabel: "Stars In System",
         yAxisLabel: yLabel,
@@ -90,7 +90,7 @@ function visualizeData(data) {
         },
     }, drawConfig);
     allCharts.push(starBarChart);
-    const planetBarChart = new BarChart(data, aggregateMapper((info) => `${info.sy_pnum}`, (label, value) => ({ label, value })), {
+    const planetBarChart = new BarChart(data, aggregateMapper((info) => `${info.sy_pnum}`, (label, value) => ({ label, value, tooltip: `${label} Planets: ${value}` })), {
         title: "Planets in an Exoplanet's System",
         xAxisLabel: "Planets in System",
         yAxisLabel: yLabel,

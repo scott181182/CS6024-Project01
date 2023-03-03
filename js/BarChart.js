@@ -1,5 +1,5 @@
 "use strict";
-class BarChart extends AbstractXYChart {
+class AbstractBarChart extends AbstractXYChart {
     setData(sourceData) {
         super.setData(sourceData);
         const sortFn = this.chartConfig.sort ||
@@ -7,6 +7,15 @@ class BarChart extends AbstractXYChart {
                 (this.chartConfig.labelOrder ? ((a, b) => this.chartConfig.labelOrder.indexOf(a.label) - this.chartConfig.labelOrder.indexOf(b.label)) :
                     (a, b) => a.label.localeCompare(b.label)));
         this.data.sort(sortFn);
+        this.initAxes();
+    }
+    constructor(rawData, dataMapper, barConfig, drawConfig) {
+        super(rawData, dataMapper, barConfig, drawConfig);
+        this.render();
+    }
+}
+class BarChart extends AbstractBarChart {
+    initAxes() {
         const xDomain = this.data.map(({ label }) => label);
         const yDomain = [0, d3.max(this.data, ({ value }) => value)];
         this.xScale = d3.scaleBand()
@@ -22,10 +31,6 @@ class BarChart extends AbstractXYChart {
         this.xAxis = d3.axisBottom(this.xScale);
         this.yAxis = d3.axisLeft(this.yScale);
         this.renderAxes(this.xScale.bandwidth());
-    }
-    constructor(rawData, dataMapper, barConfig, drawConfig) {
-        super(rawData, dataMapper, barConfig, drawConfig);
-        this.render();
     }
     render() {
         const barSel = this.ctx.selectAll(".bar").data(this.data).join("rect")
@@ -43,25 +48,16 @@ class BarChart extends AbstractXYChart {
         enableTooltip(barSel, (d) => d.tooltip);
     }
 }
-class HorizontalBarChart extends AbstractXYChart {
-    setData(sourceData) {
-        super.setData(sourceData);
-        const sortFn = this.chartConfig.sort ||
-            (this.chartConfig.labelSort ? (a, b) => this.chartConfig.labelSort(a.label, b.label) :
-                (this.chartConfig.labelOrder ? ((a, b) => this.chartConfig.labelOrder.indexOf(a.label) - this.chartConfig.labelOrder.indexOf(b.label)) :
-                    (a, b) => a.label.localeCompare(b.label)));
-        this.data.sort(sortFn);
-    }
-    constructor(rawData, dataMapper, barConfig, drawConfig) {
-        super(rawData, dataMapper, barConfig, drawConfig);
+class HorizontalBarChart extends AbstractBarChart {
+    initAxes() {
         const xDomain = [0, d3.max(this.data, ({ value }) => value)];
         const yDomain = this.data.map(({ label }) => label);
         this.xScale = d3.scaleLinear()
             .domain(xDomain)
-            .range([0, drawConfig.width]);
+            .range([0, this.drawConfig.width]);
         this.yScale = d3.scaleBand()
             .domain(yDomain)
-            .range([0, drawConfig.height])
+            .range([0, this.drawConfig.height])
             .padding(0.4);
         if (this.chartConfig.colorScheme) {
             this.cScale = d3.scaleOrdinal(yDomain, this.chartConfig.colorScheme);
@@ -69,7 +65,6 @@ class HorizontalBarChart extends AbstractXYChart {
         this.xAxis = d3.axisBottom(this.xScale);
         this.yAxis = d3.axisLeft(this.yScale);
         this.renderAxes();
-        this.render();
     }
     render() {
         const barSel = this.ctx.selectAll(".bar").data(this.data).join("rect")
